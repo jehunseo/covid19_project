@@ -9,4 +9,4 @@
 - 카메라 및 Open CV 알고리즘을 이용한 장소 밀집도 분석/전송 임베디드 모듈 구현
 
 # 현재 구현 상황
-- 클라우드 서버 https://ajouycdcovid19.com/dbAdmin/index.php
+- 클라우드 서버 https://ajouycdcovid19.com/dbADMIN/index.php
