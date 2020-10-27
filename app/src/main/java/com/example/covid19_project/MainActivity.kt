@@ -14,12 +14,47 @@ import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.*
 import okio.IOException
 import java.net.URL
+import android.widget.Button
+import android.widget.TextView
+import com.android.volley.Request
+import com.android.volley.RequestQueue
+import com.android.volley.Response
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
+import org.json.JSONException
 
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var textView: TextView
+    private var requestQueue: RequestQueue? = null
+    private fun jsonParse() {
+        val url = "https://ajouycdcovid19.com/print.php"
+        val request = JsonObjectRequest(Request.Method.GET, url, null, Response.Listener {
+                response ->try {
+            val jsonArray = response.getJSONArray("BLELOG")
+            for (i in 0 until jsonArray.length()) {
+                val BLELOG = jsonArray.getJSONObject(i)
+                val id = BLELOG.getInt("id")
+                val searched_id = BLELOG.getInt("searched_id")
+                val MAC = BLELOG.getString("MAC")
+                textView.append("$id, $searched_id, $MAC\n\n")
+            }
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+        }, Response.ErrorListener { error -> error.printStackTrace() })
+        requestQueue?.add(request)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        textView = findViewById(R.id.textViewResult)
+        val button_parse: Button = findViewById(R.id.btnParse)
+        requestQueue = Volley.newRequestQueue(this)
+        button_parse.setOnClickListener {
+            jsonParse()
+        }
 
         val permission1 = ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH)
         val permission2 = ContextCompat.checkSelfPermission(this,
@@ -70,6 +105,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        /*
         button2.setOnClickListener(){
 
             //데이터를 담아 보낼 바디를 만든다
@@ -95,8 +131,13 @@ class MainActivity : AppCompatActivity() {
                     Log.d("요청","요청 실패 ")
                 }
             })
+
+
         }
+         */
+
     }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
