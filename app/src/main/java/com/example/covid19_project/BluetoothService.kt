@@ -51,7 +51,7 @@ class BluetoothService : Service() {
         }
 
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
-        startActivity(discoverableIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        startActivity(discoverableIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) // 안드11에서 버그 수정
 
         var filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         this.registerReceiver(receiver, filter)
