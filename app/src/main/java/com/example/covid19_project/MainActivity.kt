@@ -2,18 +2,18 @@ package com.example.covid19_project
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_main.*
+import okhttp3.*
+import okio.IOException
+import java.net.URL
 
 
 class MainActivity : AppCompatActivity() {
@@ -22,26 +22,31 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val permission1 = ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH)
-        val permission2 = ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADMIN)
-        val permission3 = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-        val permission4 = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+        val permission2 = ContextCompat.checkSelfPermission(this,
+            Manifest.permission.BLUETOOTH_ADMIN)
+        val permission3 = ContextCompat.checkSelfPermission(this,
+            Manifest.permission.ACCESS_COARSE_LOCATION)
+        val permission4 = ContextCompat.checkSelfPermission(this,
+            Manifest.permission.ACCESS_FINE_LOCATION)
 
         val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
-        val receiver = BluetoothReceiver()
-        //val discoverableIntent: Intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
         val intent = Intent(this, BluetoothService::class.java)
+
+        // URL을 만들어 주고
+        val ipAddress = "https://ajouycdcovid19.com/dbADMIN/index.php"
+        val url = URL(ipAddress)
 
         if (permission1 != PackageManager.PERMISSION_GRANTED
                 || permission2 != PackageManager.PERMISSION_GRANTED
                 || permission3 != PackageManager.PERMISSION_GRANTED
                 || permission4 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                    arrayOf(
-                            Manifest.permission.BLUETOOTH,
-                            Manifest.permission.BLUETOOTH_ADMIN,
-                            Manifest.permission.ACCESS_COARSE_LOCATION,
-                            Manifest.permission.ACCESS_FINE_LOCATION),
-                    642)
+                arrayOf(
+                    Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_ADMIN,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION),
+                642)
         } else {
             Log.d("DISCOVERING-PERMISSIONS", "Permissions Granted")
         }
@@ -63,23 +68,33 @@ class MainActivity : AppCompatActivity() {
             else{
                 this.startService(intent)
             }
+        }
 
-            /*
-            if (bluetoothAdapter?.isDiscovering == true) {
-                bluetoothAdapter?.cancelDiscovery()
-            }
+        button2.setOnClickListener(){
 
-            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
-            startActivity(discoverableIntent)
+            //데이터를 담아 보낼 바디를 만든다
+            val requestBody : RequestBody = FormBody.Builder()
+                .add("id","아이디")
+                .build()
 
-            var filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
-            this.registerReceiver(receiver, filter)
-            filter = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
-            this.registerReceiver(receiver, filter)
-            filter = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-            this.registerReceiver(receiver, filter)
-            bluetoothAdapter?.startDiscovery()
-             */
+            // OkHttp Request 를 만들어준다.
+            val request = Request.Builder()
+                .url(url)
+                .post(requestBody)
+                .build()
+
+            // 클라이언트 생성
+            val client = OkHttpClient()
+            Log.d("전송 주소 ",ipAddress)
+            // 요청 전송
+            client.newCall(request).enqueue(object : Callback {
+                override fun onResponse(call: Call, response: Response) {
+                    Log.d("요청","요청 완료")
+                }
+                override fun onFailure(call: Call, e: IOException) {
+                    Log.d("요청","요청 실패 ")
+                }
+            })
         }
     }
 
