@@ -51,7 +51,7 @@ class BluetoothService : Service() {
         }
 
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
-        startActivity(discoverableIntent)
+        startActivity(discoverableIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
 
         var filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         this.registerReceiver(receiver, filter)
