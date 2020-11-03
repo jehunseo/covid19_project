@@ -2,6 +2,9 @@ package com.example.covid19_project
 
 class Data_Class {
     companion object{
-        val ipAddress = "141.164.46.20"
+        var name = mutableListOf<String>()
+        var bluetoothMacAddress = mutableListOf<String>()
+        var bluetoothRssi = mutableListOf<Short>()
+        var size = 0
     }
 }
