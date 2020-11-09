@@ -35,9 +35,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fusedLocation : FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private lateinit var textView: TextView
+    private lateinit var textViewDB : TextView
 
     private var requestQueue: RequestQueue? = null
 
+    ////////////////////////////////////////////////////////////////////////////////////
+    // function for php data parse
+    ////////////////////////////////////////////////////////////////////////////////////
     val url = "https://ajouycdcovid19.com/print.php"
     private fun jsonParse() {
         val request = JsonObjectRequest(Request.Method.GET,
@@ -46,11 +50,14 @@ class MainActivity : AppCompatActivity() {
             Response.Listener { response ->
                 try {
                     val jsonArray = response.getJSONArray("BLELOG")
+
+                    textView.clearComposingText()
                     for (i in 0 until jsonArray.length()) {
                         val BLELOG = jsonArray.getJSONObject(i)
                         val id = BLELOG.getInt("id")
                         val searched_id = BLELOG.getInt("searched_id")
                         val MAC = BLELOG.getString("MAC")
+
                         textView.append("$id, $searched_id, $MAC\n\n")
                     }
 
@@ -63,6 +70,9 @@ class MainActivity : AppCompatActivity() {
         requestQueue?.add(request)
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////
+    //permission for location
+    ////////////////////////////////////////////////////////////////////////////////////
     val permissionLocation = arrayOf(
         Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION
@@ -99,10 +109,18 @@ class MainActivity : AppCompatActivity() {
         fusedLocation.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    // for android DB
+    ////////////////////////////////////////////////////////////////////////////////////
+    val helper = DataBaseHelper(this, "memo", 1)
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         textView = findViewById(R.id.textViewResult)
+        textViewDB = findViewById(R.id.textViewDB)
         val button_parse: Button = findViewById(R.id.btnParse)
         requestQueue = Volley.newRequestQueue(this)
 
@@ -173,7 +191,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnlogging.setOnClickListener {
+            for(i in (0..(Data_Class.size - 1))){
+                val memo = Memo(Data_Class.name[i],
+                                Data_Class.bluetoothMacAddress[i],
+                                Data_Class.bluetoothRssi[i]
+                                )
+                helper.insertMemo(memo)
+            }
 
+            textViewDB.text = ""
+
+            for(l in helper.selectMemo()){
+                textViewDB.append("${l.name}, ${l.MAC}, ${l.bluetoothRssi}\n")
+            }
         }
 
 

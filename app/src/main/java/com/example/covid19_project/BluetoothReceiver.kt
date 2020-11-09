@@ -21,12 +21,15 @@ class BluetoothReceiver : BroadcastReceiver() {
                 val deviceHardwareAddress = device.address // MAC address
                 val rssi = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE)
 
-                Data_Class.name.add(Data_Class.size, deviceName)
-                Data_Class.bluetoothMacAddress.add(Data_Class.size, deviceHardwareAddress)
-                Data_Class.bluetoothRssi.add(Data_Class.size, rssi)
-                Data_Class.size += 1
+                if(deviceName != null){
+                    Data_Class.name.add(Data_Class.size, deviceName)
+                    Data_Class.bluetoothMacAddress.add(Data_Class.size, deviceHardwareAddress)
+                    Data_Class.bluetoothRssi.add(Data_Class.size, rssi)
+                    Data_Class.size += 1
 
-                Log.d("condev", "$deviceName:$deviceHardwareAddress:$rssi")
+                    Log.d("condev", "$deviceName:$deviceHardwareAddress:$rssi")
+                }
+
             }
             BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
                 Log.d("condev", "isDiscovering")
