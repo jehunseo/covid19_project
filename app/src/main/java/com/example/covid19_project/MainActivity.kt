@@ -124,6 +124,10 @@ class MainActivity : AppCompatActivity() {
         val button_parse: Button = findViewById(R.id.btnParse)
         requestQueue = Volley.newRequestQueue(this)
 
+        mapbtn.setOnClickListener{
+            val intent = Intent(this, MapsActivity::class.java)  //지도 화면으로 이동하기 위한 intent객체 생성
+            startActivity(intent)
+        }
         /////////////////////////////////////////////////////////////////////////////////////////////
         //Bluetooth Permission Check/////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
