@@ -5,30 +5,28 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import android.widget.Toast.LENGTH_SHORT
 import android.widget.Toast.makeText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.MapFragment
-import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONException
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
@@ -169,12 +167,14 @@ class MainActivity : AppCompatActivity() {
                 textView.append("${Data_Class.name}, ${Data_Class.bluetoothMacAddress}, ${Data_Class.bluetoothRssi}\n\n")
             }
         }
-
+        val saveRequest =
+            PeriodicWorkRequestBuilder<ScheduledWorker>(
+                15, TimeUnit.MINUTES
+            ).build()
+        WorkManager.getInstance(this).enqueue(saveRequest)
         /////////////////////////////////////////////////////////////////////////////////////////////
         //Button Listener////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
-
-
         checkPermission()
 
         button.setOnClickListener() {
@@ -209,9 +209,6 @@ class MainActivity : AppCompatActivity() {
                 textViewDB.append("${l.name}, ${l.MAC}, ${l.bluetoothRssi}\n")
             }
         }
-
-
-
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
