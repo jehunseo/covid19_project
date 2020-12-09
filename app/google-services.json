@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "872314539868",
+    "firebase_url": "https://ajou-covid19.firebaseio.com",
+    "project_id": "ajou-covid19",
+    "storage_bucket": "ajou-covid19.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:872314539868:android:1d199ca4e759f14bac7b99",
+        "android_client_info": {
+          "package_name": "com.example.covid19_project"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "872314539868-dugj88v0c57h7d56asu2cfplrif3t7p7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzJpPF_WOgiadOe54szZj37g3kNPPpRlA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "872314539868-dugj88v0c57h7d56asu2cfplrif3t7p7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

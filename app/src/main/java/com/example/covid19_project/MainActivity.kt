@@ -62,6 +62,7 @@ class MainActivity : AppCompatActivity() {
         requestQueue?.add(request)
     }
 
+
     ////////////////////////////////////////////////////////////////////////////////////
     //permission for location
     ////////////////////////////////////////////////////////////////////////////////////
@@ -118,12 +119,6 @@ class MainActivity : AppCompatActivity() {
         val fragmentAdapter = MyPagerAdapter(supportFragmentManager)
         viewPager.adapter = fragmentAdapter
 
-        tabLayout.post {
-            tabLayout.setupWithViewPager(viewPager)
-            tabLayout.setTabsFromPagerAdapter(fragmentAdapter)
-            tabLayout.getTabAt(0)?.setIcon(R.drawable.ic_baseline_map_24)
-            tabLayout.getTabAt(1)?.setIcon(R.drawable.ic_baseline_warning_24)
-        }
 
         requestQueue = Volley.newRequestQueue(this)
 
