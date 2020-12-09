@@ -120,6 +120,12 @@ class MainActivity : AppCompatActivity() {
         viewPager.adapter = fragmentAdapter
 
 
+        tabLayout.post {
+            tabLayout.setupWithViewPager(viewPager)
+            tabLayout.setTabsFromPagerAdapter(fragmentAdapter)
+            tabLayout.getTabAt(0)?.setIcon(R.drawable.ic_baseline_map_24)
+            tabLayout.getTabAt(1)?.setIcon(R.drawable.ic_baseline_warning_24)
+        }
         requestQueue = Volley.newRequestQueue(this)
 
         //val intent_map = Intent(this, MapsActivity::class.java)  //지도 화면으로 이동하기 위한 intent객체 생성
