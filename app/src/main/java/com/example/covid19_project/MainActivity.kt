@@ -2,45 +2,43 @@ package com.example.covid19_project
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
-import android.widget.Toast.makeText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import com.android.volley.Request
 import com.android.volley.RequestQueue
-import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.android.gms.location.*
 import kotlinx.android.synthetic.main.activity_main.*
+import com.google.zxing.integration.android.IntentIntegrator
+import kotlinx.android.synthetic.main.fragment_qr.*
 import org.json.JSONException
-import java.util.concurrent.TimeUnit
-
 
 class MainActivity : AppCompatActivity() {
+
     private lateinit var fusedLocation: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
+
 
     private var requestQueue: RequestQueue? = null
 
     ////////////////////////////////////////////////////////////////////////////////////
     // function for php data parse
     ////////////////////////////////////////////////////////////////////////////////////
-    val url = "https://ajouycdcovid19.com/print.php"
+    private val url = "https://ajouycdcovid19.com/print.php"
     private fun jsonParse() {
-        val request = JsonObjectRequest(Request.Method.GET,
+        val request = JsonObjectRequest(
+            Request.Method.GET,
             url,
             null,
-            Response.Listener { response ->
+            { response ->
                 try {
                     val jsonArray = response.getJSONArray("BLELOG")
 
@@ -58,24 +56,24 @@ class MainActivity : AppCompatActivity() {
                     e.printStackTrace()
                 }
             },
-            Response.ErrorListener { error -> error.printStackTrace() })
+            { error -> error.printStackTrace() },
+        )
+
         requestQueue?.add(request)
     }
-
-
     ////////////////////////////////////////////////////////////////////////////////////
     //permission for location
     ////////////////////////////////////////////////////////////////////////////////////
-    val permissionLocation = arrayOf(
+    private val permissionLocation = arrayOf(
         Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION
     )
 
-    fun requestPermission() {
+    private fun requestPermission() {
         ActivityCompat.requestPermissions(this, permissionLocation, 99)
     }
 
-    fun checkPermission() {
+    private fun checkPermission() {
         for (p in permissionLocation) {
             val res = ContextCompat.checkSelfPermission(this, p)
             if (res != PackageManager.PERMISSION_DENIED) {
@@ -109,9 +107,10 @@ class MainActivity : AppCompatActivity() {
     ////////////////////////////////////////////////////////////////////////////////////
     // for android DB
     ////////////////////////////////////////////////////////////////////////////////////
-    val helper = DataBaseHelper(this, "memo", 1)
+    private val helper = DataBaseHelper(this, "memo", 1)
 
-
+    ////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -119,79 +118,20 @@ class MainActivity : AppCompatActivity() {
         val fragmentAdapter = MyPagerAdapter(supportFragmentManager)
         viewPager.adapter = fragmentAdapter
 
-
         tabLayout.post {
             tabLayout.setupWithViewPager(viewPager)
             tabLayout.setTabsFromPagerAdapter(fragmentAdapter)
-            tabLayout.getTabAt(0)?.setIcon(R.drawable.ic_baseline_map_24)
-            tabLayout.getTabAt(1)?.setIcon(R.drawable.ic_baseline_warning_24)
+            tabLayout.getTabAt(1)?.setIcon(R.drawable.ic_baseline_map_24)
+            tabLayout.getTabAt(2)?.setIcon(R.drawable.ic_baseline_warning_24)
         }
         requestQueue = Volley.newRequestQueue(this)
 
-        //val intent_map = Intent(this, MapsActivity::class.java)  //지도 화면으로 이동하기 위한 intent객체 생성
-        //startActivity(intent_map)
-
-        /////////////////////////////////////////////////////////////////////////////////////////////
-        //Bluetooth Permission Check/////////////////////////////////////////////////////////////////
-        /////////////////////////////////////////////////////////////////////////////////////////////
-        val permission1 = ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH)
-        val permission2 = ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.BLUETOOTH_ADMIN
-        )
-        val permission3 = ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-        val permission4 = ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )
-
-        val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
-        val intent = Intent(this, BluetoothService::class.java)
-        if (permission1 != PackageManager.PERMISSION_GRANTED
-            || permission2 != PackageManager.PERMISSION_GRANTED
-            || permission3 != PackageManager.PERMISSION_GRANTED
-            || permission4 != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(
-                    Manifest.permission.BLUETOOTH,
-                    Manifest.permission.BLUETOOTH_ADMIN,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ),
-                642
-            )
-        } else {
-            Log.d("DISCOVERING-PERMISSIONS", "Permissions Granted")
-        }
-        if (bluetoothAdapter == null) {
-            makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show()
-            finish()
-        }
-        if (bluetoothAdapter?.isEnabled == false) {
-            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            startActivityForResult(enableBtIntent, 5)
-        }
-        if (Data_Class.size != 0) {
-            for (i in 0 until Data_Class.size) {
-                Log.d(
-                    "dat2",
-                    "${Data_Class.name}, ${Data_Class.bluetoothMacAddress}, ${Data_Class.bluetoothRssi}\n\n"
-                )
-            }
-        }
-        val saveRequest =
-            PeriodicWorkRequestBuilder<ScheduledWorker>(
-                1, TimeUnit.MINUTES
-            ).build()
-        WorkManager.getInstance(this).enqueue(saveRequest)
         /////////////////////////////////////////////////////////////////////////////////////////////
         //Button Listener////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
         checkPermission()
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -219,20 +159,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 5
-            && resultCode == RESULT_CANCELED
-        ) {
-            makeText(this, "취소 했습니다", Toast.LENGTH_SHORT).show()
-            finish()
-        } else if (requestCode == 5
-            && resultCode == RESULT_OK
-        ) {
-            makeText(this, "블루투스를 활성화합니다.", Toast.LENGTH_SHORT).show()
-        }
-    }
 }
 
 
