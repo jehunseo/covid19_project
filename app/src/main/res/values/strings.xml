@@ -16,4 +16,12 @@
     <string name="main">Main</string>
     <string name="map">Map</string>
     <string name="alert">Alert</string>
+    <string name="create_account">회원가입</string>
+    <string name="email">이메일</string>
+    <string name="password">비밀번호</string>
+    <string name="confirm_password">비밀번호 확인</string>
+    <string name="sign_in">가입하기</string>
+    <string name="or">또는</string>
+    <string name="you_are_signed_in">정상적으로 로그인 되어 있습니다!</string>
+    <string name="sign_out">로그아웃</string>
 </resources>
