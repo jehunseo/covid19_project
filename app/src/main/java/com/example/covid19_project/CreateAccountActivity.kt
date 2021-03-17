@@ -83,7 +83,7 @@ class CreateAccountActivity : AppCompatActivity() {
                         finish()
                     } else {
                         Log.w(TAG, "createUserWithEmail:failure", task.exception)
-                        toast("가입 오류 발생 !")
+                        toast("가입 오류("+task.exception+")")
                     }
                 }
         }
