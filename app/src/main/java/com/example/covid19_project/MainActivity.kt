@@ -159,6 +159,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /* 뒤로가기 버튼 버그 수정*/
+    private var backPressedTime:Long = 0
+    lateinit var backToast:Toast
+    override fun onBackPressed() {
+        backToast = Toast.makeText(this, "한번 더 누르면 종료됩니다", Toast.LENGTH_LONG)
+        if (backPressedTime + 2000 > System.currentTimeMillis()) {
+            backToast.cancel()
+            ActivityCompat.finishAffinity(this)
+            System.runFinalization()
+            System.exit(0)
+        } else {
+            backToast.show()
+        }
+        backPressedTime = System.currentTimeMillis()
+    }
+
 }
 
 
