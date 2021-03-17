@@ -84,6 +84,7 @@ class CreateAccountActivity : AppCompatActivity() {
                     } else {
                         Log.w(TAG, "createUserWithEmail:failure", task.exception)
                         toast("가입 오류("+task.exception+")")
+                        /* 오류 메세지 표시하도록 강제 */
                     }
                 }
         }
