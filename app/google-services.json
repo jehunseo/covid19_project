@@ -1,34 +1,41 @@
 {
   "project_info": {
-    "project_number": "872314539868",
-    "firebase_url": "https://ajou-covid19.firebaseio.com",
-    "project_id": "ajou-covid19",
-    "storage_bucket": "ajou-covid19.appspot.com"
+    "project_number": "619132978821",
+    "project_id": "covid19-2021-cce30",
+    "storage_bucket": "covid19-2021-cce30.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:872314539868:android:1d199ca4e759f14bac7b99",
+        "mobilesdk_app_id": "1:619132978821:android:1d3b89d06ce9a6859f4bec",
         "android_client_info": {
           "package_name": "com.example.covid19_project"
         }
       },
       "oauth_client": [
         {
-          "client_id": "872314539868-dugj88v0c57h7d56asu2cfplrif3t7p7.apps.googleusercontent.com",
+          "client_id": "619132978821-33ja0gio001g6dv8jnubc4u9dgpe2rt6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.covid19_project",
+            "certificate_hash": "a6c417527f036c1cccf969d46df5b9a518ec889f"
+          }
+        },
+        {
+          "client_id": "619132978821-b3a3s70unjg47fp2eh1u7htrtf20llk7.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAzJpPF_WOgiadOe54szZj37g3kNPPpRlA"
+          "current_key": "AIzaSyCiKgh0VlW-7iyNxvRTjfeem7nbqezzXyo"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "872314539868-dugj88v0c57h7d56asu2cfplrif3t7p7.apps.googleusercontent.com",
+              "client_id": "619132978821-b3a3s70unjg47fp2eh1u7htrtf20llk7.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
