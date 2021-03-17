@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".views.SignInActivity"
+    tools:context="SignInActivity"
     tools:ignore="Autofill, LabelFor">
 
     <TextView
@@ -69,6 +69,7 @@
         android:layout_marginVertical="20dp"
         android:backgroundTint="@color/black"
         android:text="@string/sign_in"
+        android:textColor="#FFFFFF"
         app:layout_constraintBottom_toTopOf="@+id/btnCreateAccount2"
         app:layout_constraintEnd_toEndOf="@+id/etSignInPassword"
         app:layout_constraintStart_toStartOf="@+id/etSignInPassword"
