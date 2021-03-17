@@ -70,7 +70,7 @@ dependencies {
     // 파이어베이스 연동용
     implementation platform('com.google.firebase:firebase-bom:26.7.0')
     // 로그인 연동용
-    implementation 'com.google.firebase:firebase-auth:18.0.0'
+    implementation 'com.google.firebase:firebase-auth-ktx'
     implementation 'com.google.android.gms:play-services-auth:17.0.0'
 
     def work_version = "2.4.0"
@@ -85,3 +85,4 @@ dependencies {
     // optional - Test helpers
     androidTestImplementation "androidx.work:work-testing:$work_version"
 }
+
