@@ -40,6 +40,7 @@ class SignInActivity : AppCompatActivity() {
         }
     }
 
+
     private fun notEmpty(): Boolean = signInEmail.isNotEmpty() && signInPassword.isNotEmpty()
 
     private fun signInUser() {
