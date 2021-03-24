@@ -35,6 +35,7 @@ repositories {
     jcenter()
 }
 dependencies {
+
     implementation 'com.journeyapps:zxing-android-embedded:4.1.0'
 
     //Library to get URL Meta Data
@@ -72,6 +73,7 @@ dependencies {
     // 로그인 연동용
     implementation 'com.google.firebase:firebase-auth-ktx'
     implementation 'com.google.android.gms:play-services-auth:17.0.0'
+
 
     implementation 'org.jetbrains.anko:anko:0.10.5' //개발의 편의성을위한 라이브러리
 
