@@ -5,8 +5,8 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
 
 class MyPagerAdapter(fm :FragmentManager) : FragmentStatePagerAdapter(fm) {
-    var mData : ArrayList<Fragment> = arrayListOf(QRFragment(),MapFragment(),AlertFragment())
-    private val tabTitles = arrayOf("Main", "Maps", "Alert")
+    var mData : ArrayList<Fragment> = arrayListOf(QRFragment(),AlertFragment())
+    private val tabTitles = arrayOf("Main", "Alert")
 
     override fun getPageTitle(position: Int): CharSequence? {
         return tabTitles[position]
@@ -15,7 +15,6 @@ class MyPagerAdapter(fm :FragmentManager) : FragmentStatePagerAdapter(fm) {
     override fun getItem(position: Int): Fragment {
         return when (position) {
             0 -> QRFragment()
-            1 -> MapFragment()
             else -> AlertFragment()
         }
     }

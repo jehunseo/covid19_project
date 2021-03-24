@@ -31,8 +31,10 @@ import java.nio.charset.Charset
 import kotlin.experimental.and
 
 class MainActivity : AppCompatActivity() {
+    /*
     private lateinit var fusedLocation: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
+    */
 
     private var requestQueue: RequestQueue? = null
 
@@ -70,10 +72,10 @@ class MainActivity : AppCompatActivity() {
 
         requestQueue?.add(request)
     }
-
     ////////////////////////////////////////////////////////////////////////////////////
     //permission for location
     ////////////////////////////////////////////////////////////////////////////////////
+    /*
     private val permissionLocation = arrayOf(
         Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION
@@ -112,7 +114,7 @@ class MainActivity : AppCompatActivity() {
         }
         fusedLocation.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
     }
-
+    */
 
     ////////////////////////////////////////////////////////////////////////////////////
     // for android DB
@@ -121,7 +123,6 @@ class MainActivity : AppCompatActivity() {
 
     ////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -132,9 +133,8 @@ class MainActivity : AppCompatActivity() {
         tabLayout.post {
             tabLayout.setupWithViewPager(viewPager)
             tabLayout.setTabsFromPagerAdapter(fragmentAdapter)
-            tabLayout.getTabAt(1)?.setIcon(R.drawable.ic_baseline_map_24)
-            tabLayout.getTabAt(2)?.setIcon(R.drawable.ic_baseline_warning_24)
-        }
+            tabLayout.getTabAt(1)?.setIcon(R.drawable.ic_baseline_warning_24)
+        } //tap에서 mapfragment 제거 후 해당 위치 map Activity로 대체
         requestQueue = Volley.newRequestQueue(this)
 
         /////////////////////////////////////////////////////////////////////////////////////////////
@@ -144,7 +144,13 @@ class MainActivity : AppCompatActivity() {
         nfcPendingIntent = PendingIntent.getActivity(this, 0,
             Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0)
 
-        checkPermission()
+        mapbtn.setOnClickListener({
+            val intent = Intent(this, MapsActivity::class.java)
+            startActivity(intent)
+        })//MAP 버튼 클릭시 구글맵으로 넘어감
+
+
+        //checkPermission()
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             this.startForegroundService(intent)
@@ -154,8 +160,8 @@ class MainActivity : AppCompatActivity() {
 
         jsonParse()
 
-        fusedLocation = LocationServices.getFusedLocationProviderClient(this)
-        updateLocation()
+        //fusedLocation = LocationServices.getFusedLocationProviderClient(this)
+        //updateLocation()
 
         for (i in (0..(Data_Class.size - 1))) {
             val memo = Memo(
@@ -261,7 +267,24 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    /* 뒤로가기 버튼 버그 수정*/
+    private var backPressedTime:Long = 0
+    lateinit var backToast:Toast
+    override fun onBackPressed() {
+        backToast = Toast.makeText(this, "한번 더 누르면 종료됩니다", Toast.LENGTH_LONG)
+        if (backPressedTime + 2000 > System.currentTimeMillis()) {
+            backToast.cancel()
+            ActivityCompat.finishAffinity(this)
+            System.runFinalization()
+            System.exit(0)
+        } else {
+            backToast.show()
+        }
+        backPressedTime = System.currentTimeMillis()
+    }
+
 }
+
 
 
 

@@ -1,6 +1,7 @@
 package com.example.covid19_project
 
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.location.Location
@@ -8,7 +9,11 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Looper
+import android.provider.ContactsContract
 import android.util.Log
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -16,102 +21,138 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import kotlinx.android.synthetic.main.activity_maps.*
 import okhttp3.internal.ignoreIoExceptions
-import java.util.HashSet
+import org.jetbrains.anko.zoomControls
+import java.util.*
 import java.util.jar.Manifest
+import java.lang.Math
+
+//좌표를 담을 데이터 클래스 생성
+data class DataPosition (var id:String, var Lat:Double, var long:Double )
+
+var dataPosition = DataPosition ("1", 33.0, 40.0)
+var dataPosition2 = DataPosition ("2", 43.0, 41.0)
+var dataPosition3 = DataPosition ("3", 53.0, 43.0)
+var dataPosition4 = DataPosition ( "4", 54.0, 42.0)
+var dataPosition5 = DataPosition ( "5", 51.0, 41.0)
+var dataPosition6 = DataPosition ( "6", 41.0, 43.0)
+var dataPosition7 = DataPosition ( "7", 58.0, 43.0)
+
+var posArray = arrayListOf<DataPosition>(dataPosition, dataPosition2, dataPosition3, dataPosition4,
+    dataPosition5, dataPosition6, dataPosition7)
+
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
+    val permissions = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+    val PERM_FLAG = 99
 
     private lateinit var mMap: GoogleMap
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?){
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this) //getMapAsync 함수 호출시 안드로이드가 onMapReady 함수 호출
+
+        if (isPermitted()){
+            startProcess()
+        }else{
+            ActivityCompat.requestPermissions(this, permissions, PERM_FLAG)
+        }
     }
 
-    //내 위치를 가져오는 코드
-    lateinit var fusedLocationClient:FusedLocationProviderClient //배터리소모, 좌표 정확도 등등을 자동으로 해주는 역할
-    lateinit var locationCallback:LocationCallback //위에서 받아온 응답값을 처리해주는 역할
+    fun isPermitted() : Boolean {
+        for (perm in permissions) {
+            if (ContextCompat.checkSelfPermission(this, perm) != PERMISSION_GRANTED) {
+                return false
+            }
+        }
+        return true
+    }
 
-    @SuppressLint("MissingPermission") //이관련 문법 무시하는 용도
+    fun startProcess() {
+        val mapFragment = supportFragmentManager
+            .findFragmentById(R.id.map) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+    }
 
-    fun setUpdateLocationListner() {
+
+    override fun onMapReady(googleMap: GoogleMap){
+        mMap = googleMap
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        setupdateLocationListner()
+    }
+
+
+    // -- 내 위치를 가져오는 코드
+    lateinit var fusedLocationClient:FusedLocationProviderClient  //배터리소모, 정확도 관리
+    lateinit var locationCallback:LocationCallback //위를 통해 받은 좌표를 callback하는 역할
+
+
+    // -- 주기적으로 좌표를 업뎃해주는 역할
+    @SuppressLint("MissingPermission")
+    fun setupdateLocationListner() {
         val locationRequest = LocationRequest.create()
         locationRequest.run {
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            interval = 1000 // 1초에 한번씩 위치 요청
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY //정확도를 높이 하겠다.
+            interval = 1000 //1초
         }
-        locationCallback = object : LocationCallback () {
+
+        locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult?.let {
-                    for((i, location) in it.locations.withIndex()){
-                        Log.d("로케이션", "$i ${location.latitude}, ${location.longitude}")
+                    for ((i, location) in it.locations.withIndex()) {//튜플기능으로 index와 함께 꺼내쓸수 있음
+                        Log.d("로케이션", "$i ${location.latitude} ${location.longitude}")
                         setLastLocation(location)
                     }
                 }
             }
         }
-        // 로케이션 요청 함수 호출 (locationRequest, locationCallback)
+
+        // 로케이션 요청 함수 호출 (locationRequest, locationCallback
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
     }
 
+    //마커 , 카메라이동
     fun setLastLocation(location : Location) {
-        val myLocation = LatLng(location.latitude, location.longitude)
+        mMap.clear()
+        var i = 0
+        for(i in 0 until posArray.size ){
+            //posarray에 있는 위도 경도 값을 myLocation으로 둔다
+            //val myLocation = LatLng(posarray.get(i).Lat, posarray.get(i).long)
+            val locations = LatLng(posArray.get(i).Lat, posArray.get(i).long)
+            val marker = MarkerOptions()
+                .position(locations)
+            val cameraOption = CameraPosition.Builder()
+                .target(LatLng(37.0, 137.0))
+                .zoom(15.0f)
+                .build()
+            val camera = CameraUpdateFactory.newCameraPosition(cameraOption)
+            mMap.addMarker(marker)
+        }
+        val mymarker = LatLng(location.latitude,location.longitude)
+        val descriptor = getDescriptorFromDrawable(R.drawable.marker)
+        val marker = MarkerOptions()
+            .position(mymarker)
+            .title("myPosition")
+            .icon(descriptor)
+        mMap.addMarker(marker)
+
+
+
+        /*
+        val myLocation = LatLng(posarray.get(0).Lat, posarray.get(0).long)
         val marker = MarkerOptions()
             .position(myLocation)
-            .title("I am here!")
         val cameraOption = CameraPosition.Builder()
             .target(myLocation)
             .zoom(15.0f)
             .build()
         val camera = CameraUpdateFactory.newCameraPosition(cameraOption)
-
-        mMap.clear()
-        mMap.addMarker(marker)
-        mMap.moveCamera(camera)
+         */
+        //mMap.addMarker(marker)
+        //mMap.moveCamera(camera)
     }
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-        // Add a marker in Sydney and move the camera
-        val ajou = LatLng(37.280286, 127.045242)  //아주대 좌표
-
-        // 마커 아이콘 만들기
-        val descriptor = getDescriptorFromDrawable(R.drawable.marker)
-        //drawable 폴더에 저장한 marker 라능 이름의 png 파일로 마커 모양 변경
-
-        // 마커 생성 및 위치, title, icon 설정
-        val marker = MarkerOptions()
-            .position(ajou)
-            .title("Marker in Ajou University")
-            .icon(descriptor)
-        mMap.addMarker(marker)
-        setUpdateLocationListner()
-        /*
-        val cameraOption = CameraPosition.Builder()
-            .target(ajou)
-            .zoom(12f).build()
-        val camera = CameraUpdateFactory.newCameraPosition(cameraOption)
-        // 카메라 생성
-        mMap.moveCamera(camera)
-        */
-    }
-
 
     fun getDescriptorFromDrawable(drawableID : Int) : BitmapDescriptor{
         var bitmapDrawable:BitmapDrawable
@@ -124,4 +165,32 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val scaledBitmap = Bitmap.createScaledBitmap(bitmapDrawable.bitmap, 100,100, false)
         return BitmapDescriptorFactory.fromBitmap(scaledBitmap)
     } //마커 모양 및 크기 변경 함수
+
+
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when(requestCode){
+            PERM_FLAG -> {
+                var check = true
+                for(grant in grantResults) {
+                    if(grant != PERMISSION_GRANTED){
+                        check = false
+                        break
+                    }
+                }
+                if(check) {
+                    startProcess()
+                }else{
+                    Toast.makeText(this,"권한을 승인해야지만 앱을 사용할 수 있습니다.",Toast.LENGTH_LONG).show()
+                    finish()
+                }
+            }
+        }
+    }
+
 }

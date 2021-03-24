@@ -19,10 +19,11 @@
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="280dp"
+        android:layout_height="51dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/viewPager"
         app:tabGravity="fill"
@@ -35,16 +36,22 @@
             android:text="@string/main" />
 
         <com.google.android.material.tabs.TabItem
-            android:id="@+id/TabMap"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/map" />
-
-        <com.google.android.material.tabs.TabItem
             android:id="@+id/TabAlert"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/alert" />
     </com.google.android.material.tabs.TabLayout>
+
+    <Button
+        android:id="@+id/mapbtn"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:layout_width="131dp"
+        android:layout_height="54dp"
+        android:layout_marginStart="4dp"
+        android:text="MAP"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tabLayout"
+        app:layout_constraintTop_toBottomOf="@+id/viewPager" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

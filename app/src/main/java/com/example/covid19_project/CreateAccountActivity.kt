@@ -35,7 +35,6 @@ class CreateAccountActivity : AppCompatActivity() {
     }
 
     /* check if there's a signed-in user*/
-
     override fun onStart() {
         super.onStart()
         val user: FirebaseUser? = firebaseAuth.currentUser
@@ -44,11 +43,11 @@ class CreateAccountActivity : AppCompatActivity() {
             toast("자동 로그인 되었습니다")
         }
     }
-
+    /*입력칸 공백 확인*/
     private fun notEmpty(): Boolean = etEmail.text.toString().trim().isNotEmpty() &&
             etPassword.text.toString().trim().isNotEmpty() &&
             etConfirmPassword.text.toString().trim().isNotEmpty()
-
+    /*동일하게 패스워드 입력되었는지 확인*/
     private fun identicalPassword(): Boolean {
         var identical = false
         if (notEmpty() &&
@@ -66,7 +65,7 @@ class CreateAccountActivity : AppCompatActivity() {
         }
         return identical
     }
-
+    /*비밀번호 동일하게 입력되었을 경우 변수에 입력한 이메일, 비밀번호 초기화*/
     private fun signIn() {
         if (identicalPassword()) {
             // identicalPassword() returns true only  when inputs are not empty and passwords are identical
