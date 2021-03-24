@@ -120,9 +120,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         for(i in 0 until posArray.size ){
             //posarray에 있는 위도 경도 값을 myLocation으로 둔다
             //val myLocation = LatLng(posarray.get(i).Lat, posarray.get(i).long)
-            val myLocation = LatLng(posArray.get(i).Lat, posArray.get(i).long)
+            val locations = LatLng(posArray.get(i).Lat, posArray.get(i).long)
             val marker = MarkerOptions()
-                .position(myLocation)
+                .position(locations)
             val cameraOption = CameraPosition.Builder()
                 .target(LatLng(37.0, 137.0))
                 .zoom(15.0f)
@@ -130,6 +130,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val camera = CameraUpdateFactory.newCameraPosition(cameraOption)
             mMap.addMarker(marker)
         }
+        val mymarker = LatLng(location.latitude,location.longitude)
+        val descriptor = getDescriptorFromDrawable(R.drawable.marker)
+        val marker = MarkerOptions()
+            .position(mymarker)
+            .title("myPosition")
+            .icon(descriptor)
+        mMap.addMarker(marker)
+
 
 
         /*
@@ -145,6 +153,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         //mMap.addMarker(marker)
         //mMap.moveCamera(camera)
     }
+
+    fun getDescriptorFromDrawable(drawableID : Int) : BitmapDescriptor{
+        var bitmapDrawable:BitmapDrawable
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+            bitmapDrawable = getDrawable(drawableID) as BitmapDrawable
+        } else {
+            bitmapDrawable = resources.getDrawable(drawableID) as BitmapDrawable
+        }
+        //마커 크기 변환
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmapDrawable.bitmap, 100,100, false)
+        return BitmapDescriptorFactory.fromBitmap(scaledBitmap)
+    } //마커 모양 및 크기 변경 함수
 
 
 
