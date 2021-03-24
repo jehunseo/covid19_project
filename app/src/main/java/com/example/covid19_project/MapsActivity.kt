@@ -118,8 +118,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap.clear()
         var i = 0
         for(i in 0 until posArray.size ){
-            //posarray에 있는 위도 경도 값을 myLocation으로 둔다
-            //val myLocation = LatLng(posarray.get(i).Lat, posarray.get(i).long)
             val locations = LatLng(posArray.get(i).Lat, posArray.get(i).long)
             val marker = MarkerOptions()
                 .position(locations)
@@ -130,7 +128,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val camera = CameraUpdateFactory.newCameraPosition(cameraOption)
             mMap.addMarker(marker)
         }
-        val mymarker = LatLng(location.latitude,location.longitude)
+        val mymarker = LatLng(location.latitude,location.longitude) //내 좌표
         val descriptor = getDescriptorFromDrawable(R.drawable.marker)
         val marker = MarkerOptions()
             .position(mymarker)
