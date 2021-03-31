@@ -12,6 +12,9 @@ import com.example.covid19_project.Extensions.toast
 import com.example.covid19_project.FirebaseUtils.firebaseAuth
 import com.example.covid19_project.FirebaseUtils.firebaseUser
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.activity_create_account.*
 
 class CreateAccountActivity : AppCompatActivity() {
@@ -79,6 +82,18 @@ class CreateAccountActivity : AppCompatActivity() {
                         toast("회원가입 성공 !")
                         sendEmailVerification()
                         startActivity(Intent(this, MainActivity::class.java))
+                        // firestore 저장하기 위해 코드 추가
+                        val db = Firebase.firestore
+                        val signupdefault = hashMapOf(
+                            "email" to userEmail
+                        )
+                        /*현재는 email 필드만 만들면 된다. Contacts sub Collection은 NFC태깅 또는 QR코드 촬영시 생성하면 됨!*/
+                        val user = Firebase.auth.currentUser
+                        db.collection("Users").document(user.uid).set(signupdefault)
+                            .addOnSuccessListener { toast("DB 생성 완료 !") }
+                            .addOnFailureListener { toast("DB 생성 실패 ("+task.exception+")") }
+
+                        // firestore 저장 코드 끝
                         finish()
                     } else {
                         Log.w(TAG, "createUserWithEmail:failure", task.exception)
