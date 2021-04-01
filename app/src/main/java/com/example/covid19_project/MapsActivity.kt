@@ -15,12 +15,17 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
-
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import org.json.JSONArray
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.maps.android.clustering.Cluster
+import com.google.maps.android.clustering.ClusterItem
+import com.google.maps.android.clustering.ClusterManager
 import kotlinx.android.synthetic.main.activity_maps.*
 import okhttp3.internal.ignoreIoExceptions
 import org.jetbrains.anko.zoomControls
@@ -31,22 +36,27 @@ import java.lang.Math
 //좌표를 담을 데이터 클래스 생성
 data class DataPosition (var id:String, var Lat:Double, var long:Double )
 
-var dataPosition = DataPosition ("1", 33.0, 40.0)
-var dataPosition2 = DataPosition ("2", 43.0, 41.0)
-var dataPosition3 = DataPosition ("3", 53.0, 43.0)
-var dataPosition4 = DataPosition ( "4", 54.0, 42.0)
+var dataPosition = DataPosition ("1", 33.01, 40.0)
+var dataPosition2 = DataPosition ("2", 33.02, 40.0)
+var dataPosition3 = DataPosition ("3", 33.03, 40.01)
+var dataPosition4 = DataPosition ( "4", 33.04, 40.0)
 var dataPosition5 = DataPosition ( "5", 51.0, 41.0)
-var dataPosition6 = DataPosition ( "6", 41.0, 43.0)
-var dataPosition7 = DataPosition ( "7", 58.0, 43.0)
+var dataPosition6 = DataPosition ( "6", 33.05, 40.0)
+var dataPosition7 = DataPosition ( "7", 52.0, 43.0)
 
 var posArray = arrayListOf<DataPosition>(dataPosition, dataPosition2, dataPosition3, dataPosition4,
     dataPosition5, dataPosition6, dataPosition7)
 
 
+
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     val permissions = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+    private lateinit var jsonArray: JSONArray
+    private lateinit var clusterManager: ClusterManager<ClusterItem>
+    private val markerList = mutableListOf<MarkerOptions>()
     val PERM_FLAG = 99
+
 
     private lateinit var mMap: GoogleMap
 
@@ -54,11 +64,47 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
 
+        jsonArray = readAssets()
         if (isPermitted()){
             startProcess()
         }else{
             ActivityCompat.requestPermissions(this, permissions, PERM_FLAG)
         }
+    }
+
+    //json 파일 읽는 기능도 구현 가능 (아래 주석 = addmarkers를 json파일로 읽어서 마커 생성하는 방법)
+    private fun readAssets(): JSONArray{
+        val json = assets.open("places.json")
+            .bufferedReader()
+            .readText()
+        return JSONArray(json)
+    }
+
+    /*
+        private fun addMarkers(){
+        for (index in 0 until jsonArray.length()){
+            val jsonObject = jsonArray.getJSONObject(index)
+            val name = jsonObject.getString("name")
+            val lat = jsonObject.getDouble("lat")
+            val lng = jsonObject.getDouble("lng")
+            val marker = MarkerOptions().position(LatLng(lat, lng)).title(name)
+            markerList.add(marker)
+        }
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(markerList[0].position, 13.0f))
+    }
+     */
+
+    private fun addMarkers(){
+        mMap.clear()
+        for (index in 0 until posArray.size){  //DataPosition 클래스를 담아둔 배열을 돌림
+            val name = posArray.get(index).id
+            val lat = posArray.get(index).Lat
+            val lng = posArray.get(index).long
+            val marker = MarkerOptions().position(LatLng(lat, lng)).title(name)
+            markerList.add(marker) //마커 리스트에 추가, 불필요할 시 삭제할 예정, 실시간 좌표검색에는 사용 힘들듯?
+        }
+
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(markerList[0].position, 13.0f))
     }
 
     fun isPermitted() : Boolean {
@@ -79,10 +125,40 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap){
         mMap = googleMap
+        clusterManager = ClusterManager(this, googleMap)
+        addMarkers()
+        setupClusterManager()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setupdateLocationListner()
     }
 
+    private fun setupClusterManager() {
+        clusterManager.renderer = MarkerClusterRenderer(this, mMap, clusterManager)
+        addClusters()
+        setClusterManagerClickListener()
+        mMap.setOnCameraIdleListener(clusterManager)
+        mMap.setOnMarkerClickListener(clusterManager)
+        clusterManager.cluster()
+    }
+
+    private fun addClusters() {
+        for (marker in markerList){
+            val clusterItem = MarkerClusterItem(marker.position, marker.title)
+            clusterManager.addItem(clusterItem)
+        }
+    }
+
+    private fun setClusterManagerClickListener() {
+        clusterManager.setOnClusterClickListener {
+            val items = it.items
+            val itemsList = mutableListOf<String>()
+            for (item in items){
+                itemsList.add((item as MarkerClusterItem).markerTitle)
+            }
+            true
+        }
+    }
+    //https://github.com/MChehab94/Google-Maps-Marker-Clustering 참고
 
     // -- 내 위치를 가져오는 코드
     lateinit var fusedLocationClient:FusedLocationProviderClient  //배터리소모, 정확도 관리
@@ -95,7 +171,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val locationRequest = LocationRequest.create()
         locationRequest.run {
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY //정확도를 높이 하겠다.
-            interval = 1000 //1초
+            interval = 10000 //10초
         }
 
         locationCallback = object : LocationCallback() {
@@ -115,7 +191,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     //마커 , 카메라이동
     fun setLastLocation(location : Location) {
-        mMap.clear()
+        //mMap.clear()
+        /*
         var i = 0
         for(i in 0 until posArray.size ){
             val locations = LatLng(posArray.get(i).Lat, posArray.get(i).long)
@@ -128,6 +205,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val camera = CameraUpdateFactory.newCameraPosition(cameraOption)
             mMap.addMarker(marker)
         }
+        */
         val mymarker = LatLng(location.latitude,location.longitude) //내 좌표
         val descriptor = getDescriptorFromDrawable(R.drawable.marker)
         val marker = MarkerOptions()
