@@ -53,6 +53,8 @@ dependencies {
     implementation 'androidx.viewpager:viewpager:1.0.0'
 
     testImplementation 'junit:junit:4.12'
+    implementation 'com.google.maps.android:android-maps-utils:2.1.0'
+    implementation 'com.google.maps.android:maps-utils-ktx:2.2.0'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.squareup.okhttp3:okhttp:4.9.0'
