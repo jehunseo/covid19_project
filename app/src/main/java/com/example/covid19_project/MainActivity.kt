@@ -2,7 +2,6 @@ package com.example.covid19_project
 
 import android.app.PendingIntent
 import android.content.Intent
-import android.net.Uri
 import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
 import android.os.Bundle
@@ -14,9 +13,10 @@ import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
-import com.google.android.gms.location.*
 import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONException
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
     /*
@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     // function for php data parse
     ////////////////////////////////////////////////////////////////////////////////////
     private val url = "https://ajouycdcovid19.com/print.php"
+
     private fun jsonParse() {
         val request = JsonObjectRequest(
             Request.Method.GET,
@@ -116,6 +117,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        //uid가 email로 쳐야 나오네?
+        Log.d("checking", "${FirebaseUtils.firebaseAuth.currentUser.uid}, ${FirebaseUtils.firebaseAuth.currentUser.email}")
+
         val fragmentAdapter = MyPagerAdapter(supportFragmentManager)
         viewPager.adapter = fragmentAdapter
 
@@ -125,6 +129,15 @@ class MainActivity : AppCompatActivity() {
             tabLayout.getTabAt(1)?.setIcon(R.drawable.ic_baseline_warning_24)
         } //tap에서 mapfragment 제거 후 해당 위치 map Activity로 대체
         requestQueue = Volley.newRequestQueue(this)
+
+
+        test.setOnClickListener({
+            Log.d("dbdata","Button clicked")
+
+            for (l in helper.selectMemo()) {
+                Log.d("dbdata", "${l.tag_main}, ${l.tag_sub}, ${l.tag_time}\n")
+            }
+    })
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         //NFC Check////////////////////////////////////////////////////////////////////////////
@@ -151,19 +164,6 @@ class MainActivity : AppCompatActivity() {
 
         //fusedLocation = LocationServices.getFusedLocationProviderClient(this)
         //updateLocation()
-
-        for (i in (0..(Data_Class.size - 1))) {
-            val memo = Memo(
-                Data_Class.name[i],
-                Data_Class.bluetoothMacAddress[i],
-                Data_Class.bluetoothRssi[i]
-            )
-            helper.insertMemo(memo)
-        }
-
-        for (l in helper.selectMemo()) {
-            Log.d("dbdata", "${l.name}, ${l.MAC}, ${l.bluetoothRssi}\n")
-        }
     }
 
     override fun onResume() {
@@ -183,17 +183,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        //Toast.makeText(this, "Found intent in onNewIntent: " + intent?.action.toString(), Toast.LENGTH_LONG).show()
-        // If we got an intent while the app is running, also check if it's a new NDEF message
-        // that was discovered
         if (intent != null) processIntent(intent)
     }
 
-    /**
-     * Check if the Intent has the action "ACTION_NDEF_DISCOVERED". If yes, handle it
-     * accordingly and parse the NDEF messages.
-     * @param checkIntent the intent to parse and handle if it's the right type
-     */
     private fun processIntent(checkIntent: Intent) {
         // Check if intent has the action of a discovered NFC tag
         // with NDEF formatted contents
@@ -222,31 +214,39 @@ class MainActivity : AppCompatActivity() {
         // Go through all NDEF messages found on the NFC tag
         for (curMsg in ndefMessages) {
             if (curMsg != null) {
+                /*
                 // Print generic information about the NDEF message
                 Log.d("NFC3", "Message$curMsg")
                 // The NDEF message usually contains 1+ records - print the number of recoreds
                 Log.d("NFC4", "Records" + curMsg.records.size.toString())
+                */
                 // Loop through all the records contained in the message
                 for (curRecord in curMsg.records) {
                     if (curRecord.toUri() != null) {
                         // URI NDEF Tag
                         var url = curRecord.toUri().toString()
                         Log.d("NFC5", "- URI : " + url)
-                        val i = Intent(Intent.ACTION_VIEW)
-                        i.data = Uri.parse(url)
-                        startActivity(i)
 
                     } else {
                         // Other NDEF Tags - simply print the payload
+                        val sdf = SimpleDateFormat("yyyyMMddHHmmss", Locale.KOREA).format(Date())
+
                         var text = ""
                         text = curRecord.payload.contentToString()
                         text = text.substring(1, text.length - 1).replace(",", "")
                         var tmp = text.split(" ")
-                        var content = ""
+                        var content : String = ""
 
                         for (t in tmp.slice(IntRange(3, tmp.size - 1))) {
                             content += t.toInt().toChar()
                         }
+                        Log.d("NFC6", "- URI : " + content)
+                        var memo = Memo(
+                            "${FirebaseUtils.firebaseAuth.currentUser.uid}",
+                            "$content",
+                            "$sdf"
+                        )
+                        helper.insertMemo(memo)
                     }
                 }
             }

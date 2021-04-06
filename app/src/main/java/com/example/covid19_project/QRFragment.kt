@@ -12,7 +12,8 @@ import androidx.fragment.app.Fragment
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.integration.android.IntentIntegrator
 import com.journeyapps.barcodescanner.BarcodeEncoder
-
+import kotlinx.android.synthetic.main.fragment_qr.*
+import android.util.Log
 
 class QRFragment : Fragment() {
     override fun onCreateView(

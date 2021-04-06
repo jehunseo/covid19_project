@@ -5,13 +5,15 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class DataBaseHelper(context : Context, name : String, version : Int) :
+class DataBaseHelper(context: Context, name: String, version: Int) :
+
     SQLiteOpenHelper(context, name, null, version){
+
     override fun onCreate(db: SQLiteDatabase?) {
         val create = "create table memo(" +
-                "name string," +
-                "MAC string, " +
-                "bluetoothRssi short "+
+                "tag_main string," +
+                "tag_sub string," +
+                "tag_time string"+
                 ")"
 
         db?.execSQL(create)
@@ -23,9 +25,9 @@ class DataBaseHelper(context : Context, name : String, version : Int) :
 
     fun insertMemo(memo : Memo){
         val values = ContentValues()
-        values.put("name", memo.name)
-        values.put("MAC", memo.MAC)
-        values.put("bluetoothRssi", memo.bluetoothRssi)
+        values.put("tag_main", memo.tag_main)
+        values.put("tag_sub", memo.tag_sub)
+        values.put("tag_time", memo.tag_time)
 
         val wd = writableDatabase
         wd.insert("memo", null, values)
@@ -40,11 +42,11 @@ class DataBaseHelper(context : Context, name : String, version : Int) :
         val cursor = rd.rawQuery(select, null)
 
         while(cursor.moveToNext()){
-            val name = cursor.getString(cursor.getColumnIndex(("name")))
-            val MAC = cursor.getString(cursor.getColumnIndex("MAC"))
-            val bluetoothRssi = cursor.getShort(cursor.getColumnIndex("bluetoothRssi"))
+            val tag_main = cursor.getString(cursor.getColumnIndex("tag_main"))
+            val tag_sub = cursor.getString(cursor.getColumnIndex("tag_sub"))
+            val tag_time = cursor.getString(cursor.getColumnIndex("tag_time"))
 
-            list.add(Memo(name, MAC, bluetoothRssi))
+            list.add(Memo(tag_main, tag_sub, tag_time))
         }
 
         cursor.close()
@@ -54,20 +56,20 @@ class DataBaseHelper(context : Context, name : String, version : Int) :
 
     fun updateMemo(memo : Memo){
         val values = ContentValues()
-        values.put("name", memo.name)
-        values.put("MAC", memo.MAC)
-        values.put("bluetoothRssi", memo.bluetoothRssi)
+        values.put("tag_main", memo.tag_main)
+        values.put("tag_sub", memo.tag_sub)
+        values.put("tag_time", memo.tag_time)
 
         val wd = writableDatabase
-        wd.update("memo", values, "MAC = ${memo.MAC}", null)
+        wd.update("memo", values, "tag_main = ${memo.tag_main}", null)
         wd.close()
     }
 
     fun deleteMemo(memo : Memo){
-        val delete = "delete from memo where MAC = ${memo.MAC}"
+        val delete = "delete from memo where tag_main = ${memo.tag_main}"
         val db = writableDatabase
         db.execSQL(delete)
         db.close()
     }
 }
-data class Memo(var name : String, var MAC : String, var bluetoothRssi : Short)
+data class Memo(var tag_main : String, var tag_sub : String, var tag_time : String)
