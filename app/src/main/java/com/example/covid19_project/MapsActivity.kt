@@ -23,6 +23,8 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
@@ -32,9 +34,12 @@ import org.jetbrains.anko.zoomControls
 import java.util.*
 import java.util.jar.Manifest
 import java.lang.Math
+import kotlin.collections.HashMap
+
+private val db = FirebaseFirestore.getInstance()  //firestore db
 
 //좌표를 담을 데이터 클래스 생성
-data class DataPosition (var id:String, var Lat:Double, var long:Double )
+data class DataPosition (var id:String, var Lat:Double, var long:Double)
 
 var dataPosition = DataPosition ("1", 33.01, 40.0)
 var dataPosition2 = DataPosition ("2", 33.02, 40.0)
@@ -46,7 +51,6 @@ var dataPosition7 = DataPosition ( "7", 52.0, 43.0)
 
 var posArray = arrayListOf<DataPosition>(dataPosition, dataPosition2, dataPosition3, dataPosition4,
     dataPosition5, dataPosition6, dataPosition7)
-
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -72,7 +76,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    //json 파일 읽는 기능도 구현 가능 (아래 주석 = addmarkers를 json파일로 읽어서 마커 생성하는 방법)
+    //json 파일 읽는 기능도 구현 가능 (아래 주석 = addmarkers, json파일로 읽어서 마커 생성하는 방법)
     private fun readAssets(): JSONArray{
         val json = assets.open("places.json")
             .bufferedReader()
@@ -80,8 +84,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         return JSONArray(json)
     }
 
-    /*
-        private fun addMarkers(){
+    private fun addMarkers(){
         for (index in 0 until jsonArray.length()){
             val jsonObject = jsonArray.getJSONObject(index)
             val name = jsonObject.getString("name")
@@ -90,10 +93,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val marker = MarkerOptions().position(LatLng(lat, lng)).title(name)
             markerList.add(marker)
         }
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(markerList[0].position, 13.0f))
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(markerList[0].position, 13.0f))
     }
-     */
-
+    /*
     private fun addMarkers(){
         mMap.clear()
         for (index in 0 until posArray.size){  //DataPosition 클래스를 담아둔 배열을 돌림
@@ -101,11 +103,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val lat = posArray.get(index).Lat
             val lng = posArray.get(index).long
             val marker = MarkerOptions().position(LatLng(lat, lng)).title(name)
-            markerList.add(marker) //마커 리스트에 추가, 불필요할 시 삭제할 예정, 실시간 좌표검색에는 사용 힘들듯?
+            markerList.add(marker)
         }
 
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(markerList[0].position, 13.0f))
     }
+     */
 
     fun isPermitted() : Boolean {
         for (perm in permissions) {
@@ -180,6 +183,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     for ((i, location) in it.locations.withIndex()) {//튜플기능으로 index와 함께 꺼내쓸수 있음
                         Log.d("로케이션", "$i ${location.latitude} ${location.longitude}")
                         setLastLocation(location)
+
+                        val data = hashMapOf("Lat" to location.latitude,"long" to location.longitude, "check" to "true")   //Firestore 필드 : 위도, 경도 (내 위치)
+                        db.collection("locations").document(FirebaseUtils.firebaseAuth.currentUser.uid)  //firestore에 data 삽입
+                            .set(data)
                     }
                 }
             }
