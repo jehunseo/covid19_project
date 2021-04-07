@@ -52,7 +52,6 @@ var dataPosition7 = DataPosition ( "7", 52.0, 43.0)
 var posArray = arrayListOf<DataPosition>(dataPosition, dataPosition2, dataPosition3, dataPosition4,
     dataPosition5, dataPosition6, dataPosition7)
 
-
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     val permissions = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -94,6 +93,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             markerList.add(marker)
         }
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(markerList[0].position, 13.0f))
+        var i = 0
     }
     /*
     private fun addMarkers(){
