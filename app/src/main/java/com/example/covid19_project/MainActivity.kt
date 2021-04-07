@@ -114,6 +114,7 @@ class MainActivity : AppCompatActivity() {
     ////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////
     override fun onCreate(savedInstanceState: Bundle?) {
+        val intent = Intent(this, MapsActivity::class.java)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
