@@ -7,9 +7,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.example.covid19_project.Extensions.toast
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.integration.android.IntentIntegrator
 import com.journeyapps.barcodescanner.BarcodeEncoder
@@ -40,6 +45,7 @@ class QRFragment : Fragment() {
             try {
                 val barcodeEncoder = BarcodeEncoder()
                 val bitmap = barcodeEncoder.encodeBitmap(FirebaseUtils.firebaseAuth.currentUser.uid, BarcodeFormat.QR_CODE, 400, 400)
+                // UID를 QR코드로 만들면, QR 리더에서 이를 인식하면 해당 UID에 접속했다는 기록을 남기도록 구현해야지!
                 imageViewQrCode.setImageBitmap(bitmap)
             } catch (e: Exception) {
             }
@@ -63,12 +69,25 @@ class QRFragment : Fragment() {
             if (result.contents == null) {
                 Toast.makeText(getActivity(), "Cancelled", Toast.LENGTH_LONG).show()
             } else {
-
+                val scanned_uid = result.getContents() // 스캔한 유저의 UID저장
                 val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA).format(Date())
+                // 디바이스 내부 DB에도 저장하고, 그리고 각 유저의 클라우드 DB에도 저장해보자
+                // 현재 QR코드를 촬영한 유저의 클라우드 DB에 접촉 기록을 저장
+                val db = Firebase.firestore
+                // 위치정보 수집 동의 값 가져오기
+                val log_scanning = hashMapOf(
+                    "Who" to scanned_uid,
+                    "When" to sdf
+                )
+                db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection("Contacts").add(log_scanning)
+                    .addOnSuccessListener { Toast.makeText(requireActivity(), "접촉 기록이 저장되었어요", Toast.LENGTH_SHORT).show() }
+                    .addOnFailureListener { Toast.makeText(requireActivity(), "접촉 기록 저장 실패", Toast.LENGTH_SHORT).show() }
+                // 클라우드 DB부분 코드 끝!
+
                 val addtag = AddTagQR(
                     requireContext(),
                     FirebaseUtils.firebaseAuth.currentUser.uid,
-                    result.getContents(),
+                    scanned_uid,
                     sdf
                 )
                 addtag.start()
