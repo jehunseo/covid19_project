@@ -13,6 +13,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.covid19_project.Extensions.toast
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
@@ -22,6 +23,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
@@ -175,9 +177,28 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     for ((i, location) in it.locations.withIndex()) {//튜플기능으로 index와 함께 꺼내쓸수 있음
                         Log.d("로케이션", "$i ${location.latitude} ${location.longitude}")
                         setLastLocation(location)
-                        val data = hashMapOf("Lat" to location.latitude,"long" to location.longitude, "check" to "true")   //Firestore 필드 : 위도, 경도 (내 위치)
-                        // 기생성된 Users 컬렉션의 각 멤버 문서에 종속되는 컬렉션 Location에 위치 데이터 저장하기
-                        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection("Location").document("Current").set(data)  //firestore에 data 삽입
+                        val docRef = db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid)
+                        docRef.get()
+                            .addOnSuccessListener { document ->
+                                if (document != null) {
+                                    val Loc_Store_Agree_value = document.getBoolean("Loc_Store_Agree")
+                                    if(Loc_Store_Agree_value == true)
+                                    {
+                                        val data = hashMapOf("Lat" to location.latitude,"long" to location.longitude, "check" to "true")   //Firestore 필드 : 위도, 경도 (내 위치)
+                                        // 기생성된 Users 컬렉션의 각 멤버 문서에 종속되는 컬렉션 Location에 위치 데이터 저장하기
+                                        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection("Location").document("Current").set(data)  //firestore에 data 삽입
+                                        //toast("익명의 위치정보가 안전하게 저장되었어요")
+                                    }else{
+                                        //toast("위치정보는 저장되지 않아요")
+                                    }
+                                } else {
+                                    //toast("가입 정보가 DB에 없어요")
+                                }
+                            }
+                            .addOnFailureListener { exception ->
+                                //toast("DB 접근 실패")
+                            }
+
 
                     }
                 }
