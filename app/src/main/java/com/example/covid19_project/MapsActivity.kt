@@ -176,8 +176,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         Log.d("로케이션", "$i ${location.latitude} ${location.longitude}")
                         setLastLocation(location)
                         val data = hashMapOf("Lat" to location.latitude,"long" to location.longitude, "check" to "true")   //Firestore 필드 : 위도, 경도 (내 위치)
-                        db.collection("locations").document(FirebaseUtils.firebaseAuth.currentUser.uid)  //firestore에 data 삽입
-                            .set(data)
+                        // 기생성된 Users 컬렉션의 각 멤버 문서에 종속되는 컬렉션 Location에 위치 데이터 저장하기
+                        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection("Location").document("Current").set(data)  //firestore에 data 삽입
+
                     }
                 }
             }

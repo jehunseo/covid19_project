@@ -58,10 +58,22 @@
         android:inputType="textPassword"
         android:maxLength="8"
         android:padding="10dp"
-        app:layout_constraintBottom_toTopOf="@id/btnCreateAccount"
+        app:layout_constraintBottom_toTopOf="@id/checkBox"
         app:layout_constraintEnd_toEndOf="@id/etPassword"
         app:layout_constraintStart_toStartOf="@id/etPassword"
         app:layout_constraintTop_toBottomOf="@id/etPassword" />
+
+    <CheckBox
+        android:id="@+id/checkBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="0dp"
+        android:layout_marginBottom="20dp"
+        android:text="밀집도 표시를 위한 위치정보 제공 동의"
+        app:layout_constraintBottom_toTopOf="@id/btnCreateAccount"
+        app:layout_constraintEnd_toEndOf="@id/etConfirmPassword"
+        app:layout_constraintStart_toStartOf="@id/etConfirmPassword"
+        app:layout_constraintTop_toBottomOf="@id/etConfirmPassword" />
 
     <Button
         android:id="@+id/btnCreateAccount"
@@ -70,9 +82,9 @@
         android:layout_marginVertical="20dp"
         android:text="@string/create_account"
         app:layout_constraintBottom_toTopOf="@id/btnSignIn2"
-        app:layout_constraintEnd_toEndOf="@id/etConfirmPassword"
-        app:layout_constraintStart_toStartOf="@id/etConfirmPassword"
-        app:layout_constraintTop_toBottomOf="@id/etConfirmPassword" />
+        app:layout_constraintEnd_toEndOf="@id/checkBox"
+        app:layout_constraintStart_toStartOf="@id/checkBox"
+        app:layout_constraintTop_toBottomOf="@id/checkBox" />
 
     <TextView
         android:id="@+id/textView3"
