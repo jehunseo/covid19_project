@@ -6,6 +6,8 @@ import kotlinx.android.synthetic.main.activity_create_account.*
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.CheckBox
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import com.example.covid19_project.Extensions.toast
@@ -35,6 +37,16 @@ class CreateAccountActivity : AppCompatActivity() {
             toast("로그인 해 주세요")
             finish()
         }
+
+        val checkBox = findViewById<CheckBox>(R.id.Loc_Store_Agree)
+        checkBox?.setOnCheckedChangeListener { buttonView, isChecked ->
+           if (isChecked) {
+               toast("익명의 위치정보를 저장해요");
+           }
+            else {
+                toast("익명의 위치정보를 저장하지 않아요")
+           }
+        }
     }
 
     /* check if there's a signed-in user*/
@@ -46,6 +58,7 @@ class CreateAccountActivity : AppCompatActivity() {
             toast("자동 로그인 되었습니다")
         }
     }
+
     /*입력칸 공백 확인*/
     private fun notEmpty(): Boolean = etEmail.text.toString().trim().isNotEmpty() &&
             etPassword.text.toString().trim().isNotEmpty() &&
@@ -84,8 +97,12 @@ class CreateAccountActivity : AppCompatActivity() {
                         startActivity(Intent(this, MainActivity::class.java))
                         // firestore 저장하기 위해 코드 추가
                         val db = Firebase.firestore
+                        // 위치정보 수집 동의 값 가져오기
+                        val Loc_Store_Agree_value = findViewById<CheckBox>(R.id.Loc_Store_Agree).isChecked()
+
                         val signupdefault = hashMapOf(
-                            "email" to userEmail
+                            "email" to userEmail,
+                            "Loc_Store_Agree" to Loc_Store_Agree_value
                         )
                         /*현재는 email 필드만 만들면 된다. Contacts sub Collection은 NFC태깅 또는 QR코드 촬영시 생성하면 됨!*/
                         val user = Firebase.auth.currentUser
