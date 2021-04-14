@@ -1,6 +1,7 @@
 package com.example.covid19_project
 
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
@@ -32,36 +33,41 @@ class MainActivity : AppCompatActivity() {
     ////////////////////////////////////////////////////////////////////////////////////
     // function for php data parse
     ////////////////////////////////////////////////////////////////////////////////////
-    private val url = "https://ajouycdcovid19.com/print.php"
+    /*
+private val url = "https://ajouycdcovid19.com/print.php"
 
-    private fun jsonParse() {
-        val request = JsonObjectRequest(
-            Request.Method.GET,
-            url,
-            null,
-            { response ->
-                try {
-                    val jsonArray = response.getJSONArray("BLELOG")
+private fun jsonParse() {
+    val request = JsonObjectRequest(
+        Request.Method.GET,
+        url,
+        null,
+        { response ->
+            try {
 
-                    for (i in 0 until jsonArray.length()) {
-                        val BLELOG = jsonArray.getJSONObject(i)
-                        val id = BLELOG.getInt("id")
-                        val searched_id = BLELOG.getInt("searched_id")
-                        val MAC = BLELOG.getString("MAC")
+                val jsonArray = response.getJSONArray("BLELOG")
 
-                        Log.d("dat", "$id, $searched_id, $MAC\n\n")
-                    }
+                for (i in 0 until jsonArray.length()) {
+                    val BLELOG = jsonArray.getJSONObject(i)
+                    val tag_main = BLELOG.getString("tag_main")
+                    val tag_sub = BLELOG.getString("tag_sub")
+                    val TIME = BLELOG.getString("TIME")
 
-
-                } catch (e: JSONException) {
-                    e.printStackTrace()
+                    Log.d("dat", "$tag_main, $tag_sub, $TIME\n\n")
                 }
-            },
-            { error -> error.printStackTrace() },
-        )
 
-        requestQueue?.add(request)
-    }
+
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+        },
+        { error -> error.printStackTrace() },
+    )
+
+    requestQueue?.add(request)
+}
+*/
+    //jsonParse()
+
     ////////////////////////////////////////////////////////////////////////////////////
     //permission for location
     ////////////////////////////////////////////////////////////////////////////////////
@@ -118,9 +124,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        //uid가 email로 쳐야 나오네?
-        Log.d("checking", "${FirebaseUtils.firebaseAuth.currentUser.uid}, ${FirebaseUtils.firebaseAuth.currentUser.email}")
-
         val fragmentAdapter = MyPagerAdapter(supportFragmentManager)
         viewPager.adapter = fragmentAdapter
 
@@ -133,11 +136,8 @@ class MainActivity : AppCompatActivity() {
 
 
         test.setOnClickListener({
-            Log.d("dbdata","Button clicked")
-
-            for (l in helper.selectMemo()) {
-                Log.d("dbdata", "${l.tag_main}, ${l.tag_sub}, ${l.tag_time}\n")
-            }
+            val gettag = GetTag(applicationContext)
+            gettag.start()
     })
 
         /////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +152,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         })//MAP 버튼 클릭시 구글맵으로 넘어감
 
-
         //checkPermission()
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -160,8 +159,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             this.startService(intent)
         }
-
-        jsonParse()
 
         //fusedLocation = LocationServices.getFusedLocationProviderClient(this)
         //updateLocation()
@@ -215,12 +212,6 @@ class MainActivity : AppCompatActivity() {
         // Go through all NDEF messages found on the NFC tag
         for (curMsg in ndefMessages) {
             if (curMsg != null) {
-                /*
-                // Print generic information about the NDEF message
-                Log.d("NFC3", "Message$curMsg")
-                // The NDEF message usually contains 1+ records - print the number of recoreds
-                Log.d("NFC4", "Records" + curMsg.records.size.toString())
-                */
                 // Loop through all the records contained in the message
                 for (curRecord in curMsg.records) {
                     if (curRecord.toUri() != null) {
@@ -230,7 +221,7 @@ class MainActivity : AppCompatActivity() {
 
                     } else {
                         // Other NDEF Tags - simply print the payload
-                        val sdf = SimpleDateFormat("yyyyMMddHHmmss", Locale.KOREA).format(Date())
+                        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA).format(Date())
 
                         var text = ""
                         text = curRecord.payload.contentToString()
@@ -242,12 +233,12 @@ class MainActivity : AppCompatActivity() {
                             content += t.toInt().toChar()
                         }
                         Log.d("NFC6", "- URI : " + content)
-                        var memo = Memo(
-                            "${FirebaseUtils.firebaseAuth.currentUser.uid}",
-                            "$content",
-                            "$sdf"
+                        val addtag = AddTag(applicationContext,
+                            FirebaseUtils.firebaseAuth.currentUser.uid,
+                            content,
+                            sdf
                         )
-                        helper.insertMemo(memo)
+                        addtag.start()
                     }
                 }
             }
@@ -272,7 +263,30 @@ class MainActivity : AppCompatActivity() {
 
 }
 
-
-
-
 // Bluetooth Reference : https://developer.android.com/guide/topics/connectivity/bluetooth
+
+class GetTag(val context: Context) : Thread() {
+    override fun run() {
+        val items = TagDatabase
+            .getInstance(context)!!
+            .getTagDao()
+            .getAll()
+
+        for (i in items) {
+            Log.d("bookList", "${i.tag_main} | ${i.tag_sub} | ${i.time}")
+        }
+    }
+}
+
+class AddTag(val context: Context,
+             val tag_main : String,
+             val tag_sub : String,
+             val time : String) : Thread() {
+    override fun run() {
+        val tag = TagEntity(tag_main, tag_sub, time)
+        TagDatabase
+            .getInstance(context)!!
+            .getTagDao()
+            .insert(tag)
+    }
+}

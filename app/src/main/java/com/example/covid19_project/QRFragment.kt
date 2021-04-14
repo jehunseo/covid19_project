@@ -1,5 +1,6 @@
 package com.example.covid19_project
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -13,7 +14,8 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.integration.android.IntentIntegrator
 import com.journeyapps.barcodescanner.BarcodeEncoder
 import kotlinx.android.synthetic.main.fragment_qr.*
-import android.util.Log
+import java.text.SimpleDateFormat
+import java.util.*
 
 class QRFragment : Fragment() {
     override fun onCreateView(
@@ -37,7 +39,7 @@ class QRFragment : Fragment() {
         qrGenButton.setOnClickListener(){
             try {
                 val barcodeEncoder = BarcodeEncoder()
-                val bitmap = barcodeEncoder.encodeBitmap("www.naver.com", BarcodeFormat.QR_CODE, 400, 400)
+                val bitmap = barcodeEncoder.encodeBitmap(FirebaseUtils.firebaseAuth.currentUser.uid, BarcodeFormat.QR_CODE, 400, 400)
                 imageViewQrCode.setImageBitmap(bitmap)
             } catch (e: Exception) {
             }
@@ -61,12 +63,32 @@ class QRFragment : Fragment() {
             if (result.contents == null) {
                 Toast.makeText(getActivity(), "Cancelled", Toast.LENGTH_LONG).show()
             } else {
-                Toast.makeText(activity, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show()
-                //QR코드 찍기 성공
-                //여기에 작업하면 된다.
+
+                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA).format(Date())
+                val addtag = AddTagQR(
+                    requireContext(),
+                    FirebaseUtils.firebaseAuth.currentUser.uid,
+                    result.getContents(),
+                    sdf
+                )
+                addtag.start()
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data)
         }
+    }
+}
+
+class AddTagQR(
+    val context: Context,
+    val tag_main: String,
+    val tag_sub: String,
+    val time: String) : Thread() {
+    override fun run() {
+        val tag = TagEntity(tag_main, tag_sub, time)
+        TagDatabase
+            .getInstance(context)!!
+            .getTagDao()
+            .insert(tag)
     }
 }

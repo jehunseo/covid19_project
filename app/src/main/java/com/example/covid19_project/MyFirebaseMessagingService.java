@@ -1,9 +1,13 @@
 package com.example.covid19_project;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
+
+import androidx.core.app.NotificationCompat;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
@@ -29,5 +33,14 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService{
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         notificationManager.notify(0,noti.build());
+
+    }
+
+    @Override
+    public void onNewToken(String token) {
+        // If you want to send messages to this application instance or
+        // manage this apps subscriptions on the server side, send the
+        // FCM registration token to your app server.
+        super.onNewToken(token);
     }
 }

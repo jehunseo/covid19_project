@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'com.google.gms.google-services' //  파이어베이스 연동용
+apply plugin: 'kotlin-kapt'
 
 android {
     compileSdkVersion 30
@@ -36,9 +37,18 @@ android {
 repositories {
     jcenter()
 }
-dependencies {
 
-    implementation 'com.journeyapps:zxing-android-embedded:4.1.0'
+dependencies {
+//저장소 관련--
+    def room_version = "2.2.5"
+    implementation "androidx.room:room-runtime:$room_version"
+    annotationProcessor "androidx.room:room-compiler:$room_version"
+    implementation "androidx.room:room-ktx:$room_version"
+
+    //코틀린인 경우 아래 kapt 추가
+    kapt "androidx.room:room-compiler:$room_version"
+    kapt "android.arch.lifecycle:compiler:$room_version"
+    kapt "android.arch.persistence.room:compiler:$room_version"
 
     //Library to get URL Meta Data
     implementation 'org.jsoup:jsoup:1.13.1'
@@ -55,6 +65,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     implementation 'com.google.maps.android:android-maps-utils:2.1.0'
     implementation 'com.google.maps.android:maps-utils-ktx:2.2.0'
+
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.squareup.okhttp3:okhttp:4.9.0'
@@ -69,10 +80,12 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
     /*DB 조회를 위한 의존성 추가*/
     implementation 'com.android.volley:volley:1.2.0'
     compileOnly 'com.google.android.wearable:wearable:2.8.1'
-    implementation 'com.google.firebase:firebase-messaging:21.0.1'
+
+    implementation 'com.google.firebase:firebase-messaging-ktx'
     // 파이어베이스 연동용
     implementation platform('com.google.firebase:firebase-bom:26.7.0')
     // FireStore 연동용
@@ -80,6 +93,7 @@ dependencies {
     // 다이나믹 링크 연동용
     implementation 'com.google.firebase:firebase-dynamic-links-ktx'
     implementation 'com.google.firebase:firebase-analytics-ktx'
+
     // 로그인 연동용
     implementation 'com.google.firebase:firebase-auth-ktx'
     implementation 'com.google.android.gms:play-services-auth:19.0.0'
@@ -98,5 +112,8 @@ dependencies {
     implementation "androidx.work:work-gcm:$work_version"
     // optional - Test helpers
     androidTestImplementation "androidx.work:work-testing:$work_version"
+
+    implementation 'com.journeyapps:zxing-android-embedded:4.2.0'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
 }
 

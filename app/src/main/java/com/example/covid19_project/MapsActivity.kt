@@ -9,7 +9,6 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Looper
-import android.provider.ContactsContract
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
@@ -24,17 +23,10 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
-import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
 import kotlinx.android.synthetic.main.activity_maps.*
-import okhttp3.internal.ignoreIoExceptions
-import org.jetbrains.anko.zoomControls
 import java.util.*
-import java.util.jar.Manifest
-import java.lang.Math
-import kotlin.collections.HashMap
 
 private val db = FirebaseFirestore.getInstance()  //firestore db
 
@@ -183,7 +175,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     for ((i, location) in it.locations.withIndex()) {//튜플기능으로 index와 함께 꺼내쓸수 있음
                         Log.d("로케이션", "$i ${location.latitude} ${location.longitude}")
                         setLastLocation(location)
-
                         val data = hashMapOf("Lat" to location.latitude,"long" to location.longitude, "check" to "true")   //Firestore 필드 : 위도, 경도 (내 위치)
                         db.collection("locations").document(FirebaseUtils.firebaseAuth.currentUser.uid)  //firestore에 data 삽입
                             .set(data)
