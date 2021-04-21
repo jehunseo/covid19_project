@@ -8,8 +8,6 @@ import androidx.room.RoomDatabase
 @Database(entities = [TagEntity::class], version = 1)
 abstract class TagDatabase : RoomDatabase(){
     abstract fun getTagDao() : TagDao
-
-
     companion object{
 
         private var INSTANCE : TagDatabase? = null

@@ -7,7 +7,7 @@
     android:layout_height="match_parent">
 
     <androidx.viewpager.widget.ViewPager
-        android:id="@+id/viewPager"
+        android:id="@+id/sample_content_fragment"
         android:layout_width="409dp"
         android:layout_height="334dp"
         app:layout_constraintBottom_toTopOf="@+id/tabLayout"
@@ -15,6 +15,11 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        </FrameLayout>
     </androidx.viewpager.widget.ViewPager>
 
     <com.google.android.material.tabs.TabLayout
@@ -25,7 +30,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/viewPager"
+        app:layout_constraintTop_toBottomOf="@+id/sample_content_fragment"
         app:tabGravity="fill"
         app:tabMode="fixed">
 
@@ -52,7 +57,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tabLayout"
-        app:layout_constraintTop_toBottomOf="@+id/viewPager" />
+        app:layout_constraintTop_toBottomOf="@+id/sample_content_fragment" />
 
     <Button
         android:id="@+id/test"

@@ -24,11 +24,11 @@ class QRFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         val qrView = inflater.inflate(R.layout.fragment_qr, container, false)
-        val qrButton:Button = qrView.findViewById(R.id.qrbutton)
+        val qrButton: Button = qrView.findViewById(R.id.qrbutton)
         val qrGenButton: Button = qrView.findViewById(R.id.qrgenbutton)
         val imageViewQrCode: ImageView = qrView.findViewById(R.id.qrView)
         //https://dwfox.tistory.com/79
-        qrButton.setOnClickListener(){
+        qrButton.setOnClickListener() {
             val integrator = IntentIntegrator.forSupportFragment(this);
 
             integrator.setOrientationLocked(false); //세로
@@ -36,12 +36,21 @@ class QRFragment : Fragment() {
             integrator.initiateScan();
         }
 
-        qrGenButton.setOnClickListener(){
+        qrGenButton.setOnClickListener() {
             try {
                 val barcodeEncoder = BarcodeEncoder()
-                val bitmap = barcodeEncoder.encodeBitmap(FirebaseUtils.firebaseAuth.currentUser.uid, BarcodeFormat.QR_CODE, 400, 400)
+                val bitmap = barcodeEncoder.encodeBitmap(FirebaseUtils.firebaseAuth.currentUser.uid,
+                    BarcodeFormat.QR_CODE,
+                    400,
+                    400)
                 imageViewQrCode.setImageBitmap(bitmap)
             } catch (e: Exception) {
+            }
+            if (savedInstanceState == null) {
+                val transaction = getFragmentManager()?.beginTransaction()
+                val fragment = CardReaderFragment()
+                transaction?.replace(R.id.sample_content_fragment, fragment)
+                transaction?.commit()
             }
         }
 
@@ -83,7 +92,8 @@ class AddTagQR(
     val context: Context,
     val tag_main: String,
     val tag_sub: String,
-    val time: String) : Thread() {
+    val time: String,
+) : Thread() {
     override fun run() {
         val tag = TagEntity(tag_main, tag_sub, time)
         TagDatabase

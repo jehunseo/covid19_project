@@ -10,12 +10,9 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.android.volley.Request
 import com.android.volley.RequestQueue
-import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import kotlinx.android.synthetic.main.activity_main.*
-import org.json.JSONException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -125,10 +122,12 @@ private fun jsonParse() {
         setContentView(R.layout.activity_main)
 
         val fragmentAdapter = MyPagerAdapter(supportFragmentManager)
-        viewPager.adapter = fragmentAdapter
+        sample_content_fragment.adapter = fragmentAdapter
+
+
 
         tabLayout.post {
-            tabLayout.setupWithViewPager(viewPager)
+            tabLayout.setupWithViewPager(sample_content_fragment)
             tabLayout.setTabsFromPagerAdapter(fragmentAdapter)
             tabLayout.getTabAt(1)?.setIcon(R.drawable.ic_baseline_warning_24)
         } //tap에서 mapfragment 제거 후 해당 위치 map Activity로 대체
@@ -138,7 +137,7 @@ private fun jsonParse() {
         test.setOnClickListener({
             val gettag = GetTag(applicationContext)
             gettag.start()
-    })
+        })
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         //NFC Check////////////////////////////////////////////////////////////////////////////
@@ -278,10 +277,12 @@ class GetTag(val context: Context) : Thread() {
     }
 }
 
-class AddTag(val context: Context,
-             val tag_main : String,
-             val tag_sub : String,
-             val time : String) : Thread() {
+class AddTag(
+    val context: Context,
+    val tag_main: String,
+    val tag_sub: String,
+    val time: String,
+) : Thread() {
     override fun run() {
         val tag = TagEntity(tag_main, tag_sub, time)
         TagDatabase
