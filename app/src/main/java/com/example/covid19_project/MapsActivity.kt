@@ -1,6 +1,7 @@
 package com.example.covid19_project
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
@@ -26,6 +27,7 @@ import com.google.android.gms.maps.model.*
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.ktx.getField
 import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
 import kotlinx.android.synthetic.main.activity_maps.*
@@ -37,14 +39,14 @@ private val db = FirebaseFirestore.getInstance()  //firestore db
 //좌표를 담을 데이터 클래스 생성
 data class DataPosition (var id:String, var Lat:Double, var long:Double)
 
-var dataPosition = DataPosition ("1", 33.01, 40.0)
-var dataPosition2 = DataPosition ("2", 33.02, 40.0)
-var dataPosition3 = DataPosition ("3", 33.03, 40.01)
-var dataPosition4 = DataPosition ( "4", 33.04, 40.0)
-var dataPosition5 = DataPosition ( "5", 51.0, 41.0)
-var dataPosition6 = DataPosition ( "6", 33.05, 40.0)
-var dataPosition7 = DataPosition ( "7", 52.0, 43.0)
-var myPos =(LatLng(0.0, 0.0))
+var dataPosition = DataPosition ("1", 36.5, 128.1)
+var dataPosition2 = DataPosition ("2", 37.4, 127.1)
+var dataPosition3 = DataPosition ("3", 38.0, 128.4)
+var dataPosition4 = DataPosition ( "4", 37.2, 128.5)
+var dataPosition5 = DataPosition ( "5", 37.3, 129.0)
+var dataPosition6 = DataPosition ( "6", 37.9, 127.4)
+var dataPosition7 = DataPosition ( "7", 37.7, 126.9)
+public var myPos =(LatLng(0.0, 0.0))
 var posArray = arrayListOf<DataPosition>(dataPosition, dataPosition2, dataPosition3, dataPosition4,
     dataPosition5, dataPosition6, dataPosition7)
 
@@ -107,7 +109,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         //var lat : Double = 0.0
         //var lng : Double = 0.0
 
-        var markerList2 = mutableListOf<MarkerOptions>()
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myPos, 13.0f))
         db.collection("Users")                       //Users 콜렉션에서
            .whereEqualTo("Loc_Store_Agree",true)     //field에 만들어놓은 위치정보 동의여부가 true인지 체크
            .get().addOnSuccessListener { documents ->            //위의 조건을 만족한 document(User uid)들을 불러와서
@@ -123,35 +125,29 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                        Log.d("마킹", "위도: ${lat}, 경도: ${lng}, email: ${name}")
                        //위치 정보 수락한 uid에 한하여 잘 불러오고 있는지 확인
                    }
-
-
                 }
                 setupClusterManager()
 
-                markerList2 = markerList
-
-                for (i in 0 until markerList2.size){
-                    Log.d("마킹2", "위치 : ${markerList2[i].position}, 이름 : ${markerList2[i].title}")
+                for (i in 0 until markerList.size){
+                    Log.d("마킹2", "위치 : ${markerList[i].position}, 이름 : ${markerList[i].title}")
                 }
            }
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myPos, 13.0f))
+
     }
 
 
-    /*
-    private fun addMarkers(){
-        mMap.clear()
+
+
+    private fun ContactsMmarker(){
         for (index in 0 until posArray.size){  //DataPosition 클래스를 담아둔 배열을 돌림
             val name = posArray.get(index).id
             val lat = posArray.get(index).Lat
             val lng = posArray.get(index).long
             val marker = MarkerOptions().position(LatLng(lat, lng)).title(name)
-            markerList.add(marker)
+            mMap.addMarker(marker)
         }
-
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(markerList[0].position, 13.0f))
     }
-     */
+
 
     fun isPermitted() : Boolean {
         for (perm in permissions) {
@@ -172,7 +168,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap){
         mMap = googleMap
         clusterManager = ClusterManager(this, googleMap)
-        //addMarkers()
+        addMarkers()
+        contact_btn.setOnClickListener({
+            ContactsMmarker()
+        })
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setupdateLocationListner()
     }
@@ -219,7 +218,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY //정확도를 높이 하겠다.
             interval = 10000 //10초
             mMap.clear()
-            addMarkers()
         }
 
 
@@ -250,7 +248,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                             .addOnFailureListener { exception ->
                                 //toast("DB 접근 실패")
                             }
-
                     }
                 }
             }
