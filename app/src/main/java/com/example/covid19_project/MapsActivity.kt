@@ -25,9 +25,11 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
 import kotlinx.android.synthetic.main.activity_maps.*
+import okhttp3.internal.readFieldOrNull
 import java.util.*
 
 private val db = FirebaseFirestore.getInstance()  //firestore db
@@ -42,7 +44,7 @@ var dataPosition4 = DataPosition ( "4", 33.04, 40.0)
 var dataPosition5 = DataPosition ( "5", 51.0, 41.0)
 var dataPosition6 = DataPosition ( "6", 33.05, 40.0)
 var dataPosition7 = DataPosition ( "7", 52.0, 43.0)
-
+var myPos =(LatLng(0.0, 0.0))
 var posArray = arrayListOf<DataPosition>(dataPosition, dataPosition2, dataPosition3, dataPosition4,
     dataPosition5, dataPosition6, dataPosition7)
 
@@ -61,7 +63,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
 
-        jsonArray = readAssets()
+        //jsonArray = readAssets()
         if (isPermitted()){
             startProcess()
         }else{
@@ -70,6 +72,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     //json 파일 읽는 기능도 구현 가능 (아래 주석 = addmarkers, json파일로 읽어서 마커 생성하는 방법)
+
+/*
     private fun readAssets(): JSONArray{
         val json = assets.open("places.json")
             .bufferedReader()
@@ -86,9 +90,54 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val marker = MarkerOptions().position(LatLng(lat, lng)).title(name)
             markerList.add(marker)
         }
+        for (i in 0 until markerList.size){
+            Log.d("마킹2", "위치 : ${markerList[i].position}, 이름 : ${markerList[i].title}")
+        }
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(markerList[0].position, 13.0f))
-        var i = 0
     }
+*/
+
+
+
+
+    val locRef = db.collection("Users")
+    val query = locRef.whereEqualTo("check", true)
+
+    private fun addMarkers(){
+        //var lat : Double = 0.0
+        //var lng : Double = 0.0
+
+        var markerList2 = mutableListOf<MarkerOptions>()
+        db.collection("Users")                       //Users 콜렉션에서
+           .whereEqualTo("Loc_Store_Agree",true)     //field에 만들어놓은 위치정보 동의여부가 true인지 체크
+           .get().addOnSuccessListener { documents ->            //위의 조건을 만족한 document(User uid)들을 불러와서
+               for(document in documents) { //document를 하나씩 반복문으로 돌린다.
+                   val name = document.getString("email")  //name 변수에 현재 돌리는 document의 email을 넣는다
+                   if(document.getDouble("Lat")!=null && document.getDouble("Long")!=null) {
+                       // field의 Lat, Lng 가 null이 아닌경우에 제한, 이렇게 하지 않으면 지도가 튕김....
+                   val lat = document.getDouble("Lat")!!
+                   val lng = document.getDouble("Long")!!
+                   val marker = MarkerOptions().position(LatLng(lat,lng)).title(name) //marker 정의
+                   markerList.add(marker)
+                      // mMap.addMarker(marker)
+                       Log.d("마킹", "위도: ${lat}, 경도: ${lng}, email: ${name}")
+                       //위치 정보 수락한 uid에 한하여 잘 불러오고 있는지 확인
+                   }
+
+
+                }
+                setupClusterManager()
+
+                markerList2 = markerList
+
+                for (i in 0 until markerList2.size){
+                    Log.d("마킹2", "위치 : ${markerList2[i].position}, 이름 : ${markerList2[i].title}")
+                }
+           }
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myPos, 13.0f))
+    }
+
+
     /*
     private fun addMarkers(){
         mMap.clear()
@@ -123,8 +172,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap){
         mMap = googleMap
         clusterManager = ClusterManager(this, googleMap)
-        addMarkers()
-        setupClusterManager()
+        //addMarkers()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setupdateLocationListner()
     }
@@ -165,11 +213,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     // -- 주기적으로 좌표를 업뎃해주는 역할
     @SuppressLint("MissingPermission")
     fun setupdateLocationListner() {
+
         val locationRequest = LocationRequest.create()
         locationRequest.run {
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY //정확도를 높이 하겠다.
             interval = 10000 //10초
+            mMap.clear()
+            addMarkers()
         }
+
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
@@ -184,9 +236,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                                     val Loc_Store_Agree_value = document.getBoolean("Loc_Store_Agree")
                                     if(Loc_Store_Agree_value == true)
                                     {
-                                        val data = hashMapOf("Lat" to location.latitude,"long" to location.longitude, "check" to "true")   //Firestore 필드 : 위도, 경도 (내 위치)
+                                        val data = hashMapOf("Lat" to location.latitude,"Long" to location.longitude)   //Firestore 필드 : 위도, 경도 (내 위치)
                                         // 기생성된 Users 컬렉션의 각 멤버 문서에 종속되는 컬렉션 Location에 위치 데이터 저장하기
-                                        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection("Location").document("Current").set(data)  //firestore에 data 삽입
+                                        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).set(data, SetOptions.merge())  //firestore에 data 삽입
                                         //toast("익명의 위치정보가 안전하게 저장되었어요")
                                     }else{
                                         //toast("위치정보는 저장되지 않아요")
@@ -199,7 +251,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                                 //toast("DB 접근 실패")
                             }
 
-
                     }
                 }
             }
@@ -211,7 +262,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     //마커 , 카메라이동
     fun setLastLocation(location : Location) {
-        //mMap.clear()
         /*
         var i = 0
         for(i in 0 until posArray.size ){
@@ -227,6 +277,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         */
         val mymarker = LatLng(location.latitude,location.longitude) //내 좌표
+        myPos = mymarker
         val descriptor = getDescriptorFromDrawable(R.drawable.marker)
         val marker = MarkerOptions()
             .position(mymarker)
