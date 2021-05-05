@@ -3,16 +3,18 @@ package com.example.covid19_project
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.Toast
+import android.widget.ToggleButton
 import androidx.fragment.app.Fragment
-import com.example.covid19_project.Extensions.toast
-import com.google.firebase.auth.ktx.auth
+import androidx.fragment.app.setFragmentResultListener
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.zxing.BarcodeFormat
@@ -30,26 +32,51 @@ class QRFragment : Fragment() {
         // Inflate the layout for this fragment
         val qrView = inflater.inflate(R.layout.fragment_qr, container, false)
         val qrButton:Button = qrView.findViewById(R.id.qrbutton)
-        val qrGenButton: Button = qrView.findViewById(R.id.qrgenbutton)
+        val nfcToggleButton : ToggleButton = qrView.findViewById(R.id.nfcToggleButton)
         val imageViewQrCode: ImageView = qrView.findViewById(R.id.qrView)
+        val fragment = CardReaderFragment()
+        val bundle = Bundle()
         //https://dwfox.tistory.com/79
+
+        try {
+            val barcodeEncoder = BarcodeEncoder()
+            val bitmap = barcodeEncoder.encodeBitmap(FirebaseUtils.firebaseAuth.currentUser.uid,
+                BarcodeFormat.QR_CODE,
+                400,
+                400)
+            // UID를 QR코드로 만들면, QR 리더에서 이를 인식하면 해당 UID에 접속했다는 기록을 남기도록 구현해야지!
+            imageViewQrCode.setImageBitmap(bitmap)
+        } catch (e: Exception) {
+        }
         qrButton.setOnClickListener(){
             val integrator = IntentIntegrator.forSupportFragment(this);
-
             integrator.setOrientationLocked(false); //세로
             integrator.setPrompt("QR을 인식해주세요!!"); //QR코드 화면이 되면 밑에 표시되는 글씨 바꿀수있음
             integrator.initiateScan();
         }
+        nfcToggleButton.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                if (savedInstanceState == null) {
+                    bundle.putString("Account", "")
+                    fragment.arguments = bundle
 
-        qrGenButton.setOnClickListener(){
-            try {
-                val barcodeEncoder = BarcodeEncoder()
-                val bitmap = barcodeEncoder.encodeBitmap(FirebaseUtils.firebaseAuth.currentUser.uid, BarcodeFormat.QR_CODE, 400, 400)
-                // UID를 QR코드로 만들면, QR 리더에서 이를 인식하면 해당 UID에 접속했다는 기록을 남기도록 구현해야지!
-                imageViewQrCode.setImageBitmap(bitmap)
-            } catch (e: Exception) {
+                    activity?.supportFragmentManager!!.beginTransaction()
+                        .add(R.id.data_view, fragment)
+                        .commit()
+
+                    setFragmentResultListener("account") { key, bundle ->
+                        val result = bundle.getString("account")
+                        Log.d("QRaccount", result!!)
+                    }
+                }
+            } else {
+                activity?.supportFragmentManager?.beginTransaction()
+                    ?.remove(fragment)
+                    ?.commit()
+                AccountStorage.SetAccount(activity, FirebaseUtils.firebaseAuth.currentUser.uid)
             }
         }
+
 
         return qrView
     }
@@ -79,9 +106,14 @@ class QRFragment : Fragment() {
                     "Who" to scanned_uid,
                     "When" to sdf
                 )
-                db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection("Contacts").add(log_scanning)
-                    .addOnSuccessListener { Toast.makeText(requireActivity(), "접촉 기록이 저장되었어요", Toast.LENGTH_SHORT).show() }
-                    .addOnFailureListener { Toast.makeText(requireActivity(), "접촉 기록 저장 실패", Toast.LENGTH_SHORT).show() }
+                db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
+                    "Contacts").add(log_scanning)
+                    .addOnSuccessListener { Toast.makeText(requireActivity(),
+                        "접촉 기록이 저장되었어요",
+                        Toast.LENGTH_SHORT).show() }
+                    .addOnFailureListener { Toast.makeText(requireActivity(),
+                        "접촉 기록 저장 실패",
+                        Toast.LENGTH_SHORT).show() }
                 // 클라우드 DB부분 코드 끝!
 
                 val addtag = AddTagQR(
@@ -102,7 +134,8 @@ class AddTagQR(
     val context: Context,
     val tag_main: String,
     val tag_sub: String,
-    val time: String) : Thread() {
+    val time: String,
+) : Thread() {
     override fun run() {
         val tag = TagEntity(tag_main, tag_sub, time)
         TagDatabase
@@ -110,4 +143,6 @@ class AddTagQR(
             .getTagDao()
             .insert(tag)
     }
+
+
 }

@@ -21,7 +21,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fusedLocation: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     */
-
     private var requestQueue: RequestQueue? = null
 
     private var nfcAdapter: NfcAdapter? = null
@@ -124,21 +123,12 @@ private fun jsonParse() {
         val fragmentAdapter = MyPagerAdapter(supportFragmentManager)
         sample_content_fragment.adapter = fragmentAdapter
 
-
-
         tabLayout.post {
             tabLayout.setupWithViewPager(sample_content_fragment)
             tabLayout.setTabsFromPagerAdapter(fragmentAdapter)
             tabLayout.getTabAt(1)?.setIcon(R.drawable.ic_baseline_warning_24)
         } //tap에서 mapfragment 제거 후 해당 위치 map Activity로 대체
         requestQueue = Volley.newRequestQueue(this)
-
-
-        test.setOnClickListener({
-            val gettag = GetTag(applicationContext)
-            gettag.start()
-        })
-
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         //NFC Check////////////////////////////////////////////////////////////////////////////

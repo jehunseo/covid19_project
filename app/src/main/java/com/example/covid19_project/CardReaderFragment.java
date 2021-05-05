@@ -20,12 +20,10 @@ public class CardReaderFragment extends Fragment implements LoyaltyCardReader.Ac
     public static int READER_FLAGS =
             NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK;
     public LoyaltyCardReader mLoyaltyCardReader;
-
     /** Called when sample is created. Displays generic UI with welcome text. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         mLoyaltyCardReader = new LoyaltyCardReader(this);
         enableReaderMode();
     }
@@ -64,12 +62,15 @@ public class CardReaderFragment extends Fragment implements LoyaltyCardReader.Ac
     public void onAccountReceived(final String account) {
         // This callback is run on a background thread, but updates to UI elements must be performed
         // on the UI thread.
+
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Bundle result = new Bundle();
+                result.putString("account", account);
+                getParentFragmentManager().setFragmentResult("account", result);
                 Log.d(TAG.concat("account"), account);
             }
         });
-
     }
 }

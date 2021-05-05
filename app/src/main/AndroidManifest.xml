@@ -4,7 +4,6 @@
     package="com.example.covid19_project">
 
     <uses-sdk tools:overrideLibrary="com.google.zxing.client.android" />
-
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!--
          The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
@@ -25,6 +24,7 @@
     <!--NFC-->
     <uses-permission android:name="android.permission.NFC" />
     <uses-feature android:name="android.hardware.nfc" android:required="true" />
+    <uses-feature android:name="android.hardware.nfc.hce" android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -93,6 +93,20 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
             </intent-filter>
+        </service>
+
+        <service android:name=".CardService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NFC_SERVICE">
+        <!-- Intent filter indicating that we support card emulation. -->
+        <intent-filter>
+            <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+        </intent-filter>
+        <!-- Required XML configuration file, listing the AIDs that we are emulating cards
+             for. This defines what protocols our card emulation service supports. -->
+        <meta-data android:name="android.nfc.cardemulation.host_apdu_service"
+            android:resource="@xml/aid_list"/>
         </service>
     </application>
 

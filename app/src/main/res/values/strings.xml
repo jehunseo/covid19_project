@@ -24,4 +24,6 @@
     <string name="or">또는</string>
     <string name="you_are_signed_in">정상적으로 로그인 되어 있습니다!</string>
     <string name="sign_out">로그아웃</string>
+
+    <string name="card_title">covid_19 path card</string>
 </resources>
