@@ -2,8 +2,10 @@ package com.example.covid19_project
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
+import android.text.TextUtils.replace
 import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
@@ -15,6 +17,8 @@ import android.widget.Toast
 import android.widget.ToggleButton
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
+import com.google.firebase.dynamiclinks.DynamicLink
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.zxing.BarcodeFormat
@@ -36,11 +40,29 @@ class QRFragment : Fragment() {
         val imageViewQrCode: ImageView = qrView.findViewById(R.id.qrView)
         val fragment = CardReaderFragment()
         val bundle = Bundle()
-        //https://dwfox.tistory.com/79
+
+        // QR코드 생성시 현재 유저의 UID를 담은 다이나믹 링크를 바로 생성한다
+        val DEEPLINK_URL = "https://ajouycdcovid19.com/"
+        val SHORT_DYNAMIC_LINK = "https://ajouunivcovid19.page.link"
+        val PACKAGE_NAME = "com.example.covid19_project"
+
+        fun createDynamicLink(): String {
+            return FirebaseDynamicLinks.getInstance()
+                .createDynamicLink()
+                .setLink(Uri.parse(DEEPLINK_URL))
+                .setDomainUriPrefix(SHORT_DYNAMIC_LINK)
+                .setAndroidParameters(
+                    DynamicLink.AndroidParameters.Builder(PACKAGE_NAME)
+                        .build()
+                )
+                .buildDynamicLink()
+                .uri.toString() + "meet/" +  FirebaseUtils.firebaseAuth.currentUser.uid //  https://ajoucovid19.com/meet/접촉UID
+        }
+        // 다이나믹 링크 생성 부분 끝
 
         try {
             val barcodeEncoder = BarcodeEncoder()
-            val bitmap = barcodeEncoder.encodeBitmap(FirebaseUtils.firebaseAuth.currentUser.uid,
+            val bitmap = barcodeEncoder.encodeBitmap(createDynamicLink(),
                 BarcodeFormat.QR_CODE,
                 400,
                 400)
@@ -122,7 +144,8 @@ class QRFragment : Fragment() {
             if (result.contents == null) {
                 Toast.makeText(getActivity(), "Cancelled", Toast.LENGTH_LONG).show()
             } else {
-                val scanned_uid = result.getContents() // 스캔한 유저의 UID저장
+                val scanned = result.getContents()
+                val scanned_uid = scanned.replace("https://ajouunivcovid19.page.link?apn=com.example.covid19_project&link=https%3A%2F%2Fajouycdcovid19.com%2Fmeet/","")
                 val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA).format(Date())
                 // 디바이스 내부 DB에도 저장하고, 그리고 각 유저의 클라우드 DB에도 저장해보자
                 // 현재 QR코드를 촬영한 유저의 클라우드 DB에 접촉 기록을 저장
@@ -132,8 +155,9 @@ class QRFragment : Fragment() {
                     "Who" to scanned_uid,
                     "When" to sdf
                 )
+
                 db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
-                    "Contacts").add(scanned_uid)
+                    "Contacts").add(log_scanning)
                     .addOnSuccessListener { Toast.makeText(requireActivity(),
                         "접촉 기록이 저장되었어요",
                         Toast.LENGTH_SHORT).show() }

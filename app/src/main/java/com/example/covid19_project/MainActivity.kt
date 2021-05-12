@@ -3,6 +3,7 @@ package com.example.covid19_project
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
 import android.os.Bundle
@@ -12,6 +13,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
+import com.example.covid19_project.Extensions.toast
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.activity_main.*
@@ -125,6 +128,33 @@ class MainActivity : AppCompatActivity() {
 
         //fusedLocation = LocationServices.getFusedLocationProviderClient(this)
         //updateLocation()
+
+        /* 다이나믹 링크 값을 얻고, 저장한다 */
+        FirebaseDynamicLinks.getInstance()
+            .getDynamicLink(intent)
+            .addOnSuccessListener {
+                var deppLink: Uri? = null
+                if (it != null) {
+                    deppLink = it.link
+                    val who = deppLink!!.path!!.replace("/meet/", "")
+                    // 접촉 기록 저장 시작
+                    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA).format(Date())
+                    val db = Firebase.firestore
+                    val log_scanning = hashMapOf(
+                        "Who" to who,
+                        "When" to sdf
+                    )
+                    db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
+                        "Contacts").add(log_scanning)
+                        .addOnSuccessListener {toast(who +"와의 접촉 기록이 저장되었어요")}
+                        .addOnFailureListener {toast("접촉 기록 저장 실패")}
+                } else {
+                }
+
+            }
+            .addOnFailureListener {
+                toast("다이나믹 링크 동작 에러")
+            }
     }
 
     override fun onResume() {
@@ -223,6 +253,8 @@ class MainActivity : AppCompatActivity() {
         }
         backPressedTime = System.currentTimeMillis()
     }
+
+
 
 }
 

@@ -2,12 +2,15 @@ package com.example.covid19_project
 
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.covid19_project.Extensions.toast
 import com.example.covid19_project.FirebaseUtils.firebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 
 import kotlinx.android.synthetic.main.activity_sign_in.*
 
