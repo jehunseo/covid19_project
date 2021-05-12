@@ -58,7 +58,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private val markerList = mutableListOf<MarkerOptions>()
     val PERM_FLAG = 99
 
-
     private lateinit var mMap: GoogleMap
 
     override fun onCreate(savedInstanceState: Bundle?){

@@ -12,6 +12,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.activity_main.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -25,44 +27,6 @@ class MainActivity : AppCompatActivity() {
 
     private var nfcAdapter: NfcAdapter? = null
     private var nfcPendingIntent: PendingIntent? = null
-
-    ////////////////////////////////////////////////////////////////////////////////////
-    // function for php data parse
-    ////////////////////////////////////////////////////////////////////////////////////
-    /*
-private val url = "https://ajouycdcovid19.com/print.php"
-
-private fun jsonParse() {
-    val request = JsonObjectRequest(
-        Request.Method.GET,
-        url,
-        null,
-        { response ->
-            try {
-
-                val jsonArray = response.getJSONArray("BLELOG")
-
-                for (i in 0 until jsonArray.length()) {
-                    val BLELOG = jsonArray.getJSONObject(i)
-                    val tag_main = BLELOG.getString("tag_main")
-                    val tag_sub = BLELOG.getString("tag_sub")
-                    val TIME = BLELOG.getString("TIME")
-
-                    Log.d("dat", "$tag_main, $tag_sub, $TIME\n\n")
-                }
-
-
-            } catch (e: JSONException) {
-                e.printStackTrace()
-            }
-        },
-        { error -> error.printStackTrace() },
-    )
-
-    requestQueue?.add(request)
-}
-*/
-    //jsonParse()
 
     ////////////////////////////////////////////////////////////////////////////////////
     //permission for location
@@ -116,6 +80,20 @@ private fun jsonParse() {
     ////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////
     override fun onCreate(savedInstanceState: Bundle?) {
+        //test
+        val db = Firebase.firestore
+        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection("Contacts")
+            .whereEqualTo("When", "2021-05-06")
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d("DBtest", "this user has ${documents.size()} contact record(s)")
+                for (document in documents) {
+                    Log.d("DBtest", "make push to ${document.data.get("Who")}")
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.w("DBtest", "Error getting documents: ", exception)
+            }
         val intent = Intent(this, MapsActivity::class.java)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)

@@ -66,8 +66,34 @@ class QRFragment : Fragment() {
 
                     setFragmentResultListener("account") { key, bundle ->
                         val result = bundle.getString("account")
-                        Log.d("QRaccount", result!!)
+                        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA).format(Date())
+                        // 디바이스 내부 DB에도 저장하고, 그리고 각 유저의 클라우드 DB에도 저장해보자
+                        // 현재 QR코드를 촬영한 유저의 클라우드 DB에 접촉 기록을 저장
+                        val db = Firebase.firestore
+                        // 위치정보 수집 동의 값 가져오기
+                        val log_scanning = hashMapOf(
+                            "Who" to result,
+                            "When" to sdf
+                        )
+                        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
+                            "Contacts").add(log_scanning)
+                            .addOnSuccessListener { Toast.makeText(requireActivity(),
+                                "접촉 기록이 저장되었어요",
+                                Toast.LENGTH_SHORT).show() }
+                            .addOnFailureListener { Toast.makeText(requireActivity(),
+                                "접촉 기록 저장 실패",
+                                Toast.LENGTH_SHORT).show() }
+
+                        val addtag = AddTagQR(
+                            requireContext(),
+                            FirebaseUtils.firebaseAuth.currentUser.uid,
+                            result,
+                            sdf
+                        )
+                        Log.d("QRFragment", "${FirebaseUtils.firebaseAuth.currentUser.uid}||${result}")
+                        addtag.start()
                     }
+
                 }
             } else {
                 activity?.supportFragmentManager?.beginTransaction()
@@ -107,7 +133,7 @@ class QRFragment : Fragment() {
                     "When" to sdf
                 )
                 db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
-                    "Contacts").add(log_scanning)
+                    "Contacts").add(scanned_uid)
                     .addOnSuccessListener { Toast.makeText(requireActivity(),
                         "접촉 기록이 저장되었어요",
                         Toast.LENGTH_SHORT).show() }
@@ -133,7 +159,7 @@ class QRFragment : Fragment() {
 class AddTagQR(
     val context: Context,
     val tag_main: String,
-    val tag_sub: String,
+    val tag_sub: String?,
     val time: String,
 ) : Thread() {
     override fun run() {
