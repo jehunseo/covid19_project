@@ -14,10 +14,12 @@ import androidx.core.app.ActivityCompat
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
 import com.example.covid19_project.Extensions.toast
+import com.google.firebase.Timestamp
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.activity_main.*
+import java.text.ParsePosition
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -27,7 +29,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var locationCallback: LocationCallback
     */
     private var requestQueue: RequestQueue? = null
-
     private var nfcAdapter: NfcAdapter? = null
     private var nfcPendingIntent: PendingIntent? = null
 
@@ -78,24 +79,38 @@ class MainActivity : AppCompatActivity() {
     ////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        ////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////
         //test
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
+        val currentDay = dateFormat.parse(sdf, ParsePosition(0))
+        val currentLong = currentDay.time - 1210000000 // 2주 전
+
         val db = Firebase.firestore
         db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection("Contacts")
-            .whereEqualTo("When", "2021-05-06")
+            .whereGreaterThan("When", currentLong.let{Date(it)})
             .get()
             .addOnSuccessListener { documents ->
                 Log.d("DBtest", "this user has ${documents.size()} contact record(s)")
                 for (document in documents) {
-                    Log.d("DBtest", "make push to ${document.data.get("Who")}")
+                    val timestamp = document.data.get("When") as Timestamp
+                    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH").format(timestamp.toDate())
+                    Log.d("DBtest", "${document.data.get("Who")}, ${dateFormat}")
+
                 }
             }
             .addOnFailureListener { exception ->
                 Log.w("DBtest", "Error getting documents: ", exception)
             }
-        val intent = Intent(this, MapsActivity::class.java)
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
+        ////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////
+
+        val intent = Intent(this, MapsActivity::class.java)
         val fragmentAdapter = MyPagerAdapter(supportFragmentManager)
         sample_content_fragment.adapter = fragmentAdapter
 
@@ -138,11 +153,15 @@ class MainActivity : AppCompatActivity() {
                     deppLink = it.link
                     val who = deppLink!!.path!!.replace("/meet/", "")
                     // 접촉 기록 저장 시작
-                    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA).format(Date())
+                    val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
+                    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
+                    val currentDay = dateFormat.parse(sdf, ParsePosition(0))
+                    val currentLong = currentDay.time
+
                     val db = Firebase.firestore
                     val log_scanning = hashMapOf(
                         "Who" to who,
-                        "When" to sdf
+                        "When" to currentLong.let{Date(it)}
                     )
                     db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
                         "Contacts").add(log_scanning)
@@ -214,7 +233,10 @@ class MainActivity : AppCompatActivity() {
 
                     } else {
                         // Other NDEF Tags - simply print the payload
-                        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA).format(Date())
+                        val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
+                        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
+                        val currentDay = dateFormat.parse(sdf, ParsePosition(0))
+                        val currentLong = currentDay.time
 
                         var text = ""
                         text = curRecord.payload.contentToString()
@@ -229,7 +251,7 @@ class MainActivity : AppCompatActivity() {
                         val addtag = AddTag(applicationContext,
                             FirebaseUtils.firebaseAuth.currentUser.uid,
                             content,
-                            sdf
+                            currentLong.let{Date(it)}
                         )
                         addtag.start()
                     }
@@ -277,7 +299,7 @@ class AddTag(
     val context: Context,
     val tag_main: String,
     val tag_sub: String,
-    val time: String,
+    val time: Date?
 ) : Thread() {
     override fun run() {
         val tag = TagEntity(tag_main, tag_sub, time)

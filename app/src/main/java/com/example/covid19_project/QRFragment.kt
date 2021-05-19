@@ -4,9 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextUtils.replace
-import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -24,7 +21,7 @@ import com.google.firebase.ktx.Firebase
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.integration.android.IntentIntegrator
 import com.journeyapps.barcodescanner.BarcodeEncoder
-import kotlinx.android.synthetic.main.fragment_qr.*
+import java.text.ParsePosition
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -88,14 +85,21 @@ class QRFragment : Fragment() {
 
                     setFragmentResultListener("account") { key, bundle ->
                         val result = bundle.getString("account")
-                        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA).format(Date())
+
+                        val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
+                        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
+                        val currentDay = dateFormat.parse(sdf, ParsePosition(0))
+                        val currentLong = currentDay.time
+
+                        Log.d("timestr", sdf)
+                        Log.d("timelong", currentLong.toString())
                         // 디바이스 내부 DB에도 저장하고, 그리고 각 유저의 클라우드 DB에도 저장해보자
                         // 현재 QR코드를 촬영한 유저의 클라우드 DB에 접촉 기록을 저장
                         val db = Firebase.firestore
                         // 위치정보 수집 동의 값 가져오기
                         val log_scanning = hashMapOf(
                             "Who" to result,
-                            "When" to sdf
+                            "When" to currentLong.let{Date(it)}
                         )
                         db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
                             "Contacts").add(log_scanning)
@@ -110,7 +114,7 @@ class QRFragment : Fragment() {
                             requireContext(),
                             FirebaseUtils.firebaseAuth.currentUser.uid,
                             result,
-                            sdf
+                            currentLong.let{Date(it)}
                         )
                         Log.d("QRFragment", "${FirebaseUtils.firebaseAuth.currentUser.uid}||${result}")
                         addtag.start()
@@ -146,14 +150,19 @@ class QRFragment : Fragment() {
             } else {
                 val scanned = result.getContents()
                 val scanned_uid = scanned.replace("https://ajouunivcovid19.page.link?apn=com.example.covid19_project&link=https%3A%2F%2Fajouycdcovid19.com%2Fmeet/","")
-                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA).format(Date())
+
+                val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
+                val currentDay = dateFormat.parse(sdf, ParsePosition(0))
+                val currentLong = currentDay.time
+
                 // 디바이스 내부 DB에도 저장하고, 그리고 각 유저의 클라우드 DB에도 저장해보자
                 // 현재 QR코드를 촬영한 유저의 클라우드 DB에 접촉 기록을 저장
                 val db = Firebase.firestore
                 // 위치정보 수집 동의 값 가져오기
                 val log_scanning = hashMapOf(
                     "Who" to scanned_uid,
-                    "When" to sdf
+                    "When" to currentLong.let{Date(it)}
                 )
 
                 db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
@@ -165,12 +174,11 @@ class QRFragment : Fragment() {
                         "접촉 기록 저장 실패",
                         Toast.LENGTH_SHORT).show() }
                 // 클라우드 DB부분 코드 끝!
-
                 val addtag = AddTagQR(
                     requireContext(),
                     FirebaseUtils.firebaseAuth.currentUser.uid,
                     scanned_uid,
-                    sdf
+                    currentLong.let{Date(it)}
                 )
                 addtag.start()
             }
@@ -184,7 +192,7 @@ class AddTagQR(
     val context: Context,
     val tag_main: String,
     val tag_sub: String?,
-    val time: String,
+    val time: Date?,
 ) : Thread() {
     override fun run() {
         val tag = TagEntity(tag_main, tag_sub, time)
