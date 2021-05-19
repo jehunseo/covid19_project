@@ -46,7 +46,7 @@ var dataPosition4 = DataPosition ( "4", 37.2, 128.5)
 var dataPosition5 = DataPosition ( "5", 37.3, 129.0)
 var dataPosition6 = DataPosition ( "6", 37.9, 127.4)
 var dataPosition7 = DataPosition ( "7", 37.7, 126.9)
-public var myPos =(LatLng(0.0, 0.0))
+public var myPos =(LatLng(myLatitude, myLongitude))
 var posArray = arrayListOf<DataPosition>(dataPosition, dataPosition2, dataPosition3, dataPosition4,
     dataPosition5, dataPosition6, dataPosition7)
 
@@ -55,7 +55,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     val permissions = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION)
     private lateinit var jsonArray: JSONArray
     private lateinit var clusterManager: ClusterManager<ClusterItem>
-    private val markerList = mutableListOf<MarkerOptions>()
+    private val markerList = mutableListOf<MarkerOptions>()  //밀집도 표시를 위한 리스트
+    private val markerList2 = mutableListOf<MarkerOptions>()  //접촉자 표시를 위한 리스트
     val PERM_FLAG = 99
 
     private lateinit var mMap: GoogleMap
@@ -108,7 +109,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         //var lat : Double = 0.0
         //var lng : Double = 0.0
 
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myPos, 13.0f))
+        //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myPos, 13.0f))
         db.collection("Users")                       //Users 콜렉션에서
            .whereEqualTo("Loc_Store_Agree",true)     //field에 만들어놓은 위치정보 동의여부가 true인지 체크
            .get().addOnSuccessListener { documents ->            //위의 조건을 만족한 document(User uid)들을 불러와서
@@ -130,6 +131,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 for (i in 0 until markerList.size){
                     Log.d("마킹2", "위치 : ${markerList[i].position}, 이름 : ${markerList[i].title}")
                 }
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myPos, 13.0f))
            }
 
     }
@@ -138,12 +140,30 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     private fun ContactsMmarker(){
-        for (index in 0 until posArray.size){  //DataPosition 클래스를 담아둔 배열을 돌림
-            val name = posArray.get(index).id
-            val lat = posArray.get(index).Lat
-            val lng = posArray.get(index).long
-            val marker = MarkerOptions().position(LatLng(lat, lng)).title(name)
-            mMap.addMarker(marker)
+        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection("Contacts")
+            .whereEqualTo("Loc_Store_Agree",true)
+            .get().addOnSuccessListener { documents ->            //위의 조건을 만족한 document(User uid)들을 불러와서
+                for(document in documents) { //document를 하나씩 반복문으로 돌린다.
+                    val name = document.getString("Who")  //name 변수에 현재 돌리는 document의 who을 넣는다
+                    val contactTime = document.getString("When")
+                    if(document.getDouble("Lat")!=null && document.getDouble("Long")!=null) {
+                        // field의 Lat, Lng 가 null이 아닌경우에 제한, 이렇게 하지 않으면 지도가 튕김....
+                        val lat = document.getDouble("Lat")!!
+                        val lng = document.getDouble("Long")!!
+                        val descriptor = getDescriptorFromDrawable(R.drawable.redcirlce) //접촉자 마커 모양 설정
+                        val marker = MarkerOptions().position(LatLng(lat,lng)).title(contactTime).icon(descriptor) //marker 정의
+                        markerList2.add(marker)
+                        //mMap.addMarker(marker)
+                        Log.d("마킹3", "위도: ${lat}, 경도: ${lng}, contact: ${name}")
+                        //위치 정보 수락한 uid에 한하여 잘 불러오고 있는지 확인
+                    }
+                }
+                for (i in 0 until markerList2.size){
+                    Log.d("마킹4", "위치 : ${markerList2[i].position}, 이름 : ${markerList2[i].title}")
+                }
+                for (i in 0 until markerList2.size){
+                   mMap.addMarker(markerList2[i])
+                }
         }
     }
 
@@ -168,9 +188,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
         clusterManager = ClusterManager(this, googleMap)
         addMarkers()
-        contact_btn.setOnClickListener({
+        contact_btn.setOnClickListener {
             ContactsMmarker()
-        })
+        }
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setupdateLocationListner()
     }
@@ -216,7 +236,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         locationRequest.run {
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY //정확도를 높이 하겠다.
             interval = 10000 //10초
-            mMap.clear()
         }
 
 
@@ -282,19 +301,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap.addMarker(marker)
 
 
-
-        /*
-        val myLocation = LatLng(posarray.get(0).Lat, posarray.get(0).long)
-        val marker = MarkerOptions()
-            .position(myLocation)
-        val cameraOption = CameraPosition.Builder()
-            .target(myLocation)
-            .zoom(15.0f)
-            .build()
-        val camera = CameraUpdateFactory.newCameraPosition(cameraOption)
-         */
-        //mMap.addMarker(marker)
-        //mMap.moveCamera(camera)
     }
 
     fun getDescriptorFromDrawable(drawableID : Int) : BitmapDescriptor{
