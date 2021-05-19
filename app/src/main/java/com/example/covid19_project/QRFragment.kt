@@ -99,7 +99,10 @@ class QRFragment : Fragment() {
                         // 위치정보 수집 동의 값 가져오기
                         val log_scanning = hashMapOf(
                             "Who" to result,
-                            "When" to currentLong.let{Date(it)}
+                            "When" to currentLong.let{Date(it)},
+                            "Lat" to myLatitude,
+                            "Long" to myLongitude
+                            
                         )
                         db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
                             "Contacts").add(log_scanning)
@@ -144,6 +147,7 @@ class QRFragment : Fragment() {
     ) {
         val result =
             IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+
         if (result != null) {
             if (result.contents == null) {
                 Toast.makeText(getActivity(), "Cancelled", Toast.LENGTH_LONG).show()
@@ -162,7 +166,10 @@ class QRFragment : Fragment() {
                 // 위치정보 수집 동의 값 가져오기
                 val log_scanning = hashMapOf(
                     "Who" to scanned_uid,
-                    "When" to currentLong.let{Date(it)}
+                    "When" to currentLong.let{Date(it)},
+                    "Lat" to myLatitude,
+                    "Long" to myLongitude,
+                    "Loc_Store_Agree" to true
                 )
 
                 db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
