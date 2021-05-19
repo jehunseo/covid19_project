@@ -1,40 +1,53 @@
 package com.example.covid19_project
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.net.Uri
 import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
+import android.os.Build
 import android.os.Bundle
+import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
 import com.example.covid19_project.Extensions.toast
+import com.google.android.gms.location.*
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.activity_main.*
+import org.jetbrains.anko.locationManager
 import java.text.SimpleDateFormat
 import java.util.*
+var myLatitude = 0.0
+var myLongitude = 0.0
 
 class MainActivity : AppCompatActivity() {
-    /*
-    private lateinit var fusedLocation: FusedLocationProviderClient
-    private lateinit var locationCallback: LocationCallback
-    */
+    lateinit var fusedLocationClient: FusedLocationProviderClient  //배터리소모, 정확도 관리
+    lateinit var locationCallback: LocationCallback //위를 통해 받은 좌표를 callback하는 역할
     private var requestQueue: RequestQueue? = null
 
     private var nfcAdapter: NfcAdapter? = null
     private var nfcPendingIntent: PendingIntent? = null
-
+    private var locationRequest = LocationRequest.create()
+    val permissions = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION)
     ////////////////////////////////////////////////////////////////////////////////////
     //permission for location
     ////////////////////////////////////////////////////////////////////////////////////
-    /*
+    val PERM_FLAG = 99
+
     private val permissionLocation = arrayOf(
         Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION
@@ -53,32 +66,41 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    ////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////
 
-    @SuppressLint("MissingPermission")
-    fun updateLocation() {
-        val locationRequest = LocationRequest.create()
-        locationRequest.run {
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            interval = 1000
+    private fun initLocation() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+            && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return
         }
 
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
-                locationResult?.let {
-                    for ((i, location) in it.locations.withIndex()) {
-                        Log.d("Location", "$i ${location.longitude}, ${location.latitude}")
-                    }
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location ->
+                if(location == null) {
+                    Log.e("mainloc", "location get fail")
+                } else {
+                    Log.d("mainloc", "${location.latitude} , ${location.longitude}")
+                    myLatitude = location.latitude
+                    myLongitude = location.longitude
+                    Log.d("myloc", "lat : $myLatitude, Long: $myLongitude")
                 }
             }
-        }
-        fusedLocation.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
+            .addOnFailureListener {
+                Log.e("mainloc", "location error is ${it.message}")
+                it.printStackTrace()
+            }
     }
-    */
+
 
     ////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////
     override fun onCreate(savedInstanceState: Bundle?) {
-        //test
+        super.onCreate(savedInstanceState)
+        requestPermission()
+        setContentView(R.layout.activity_main)
+        initLocation()
         val db = Firebase.firestore
         db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection("Contacts")
             .whereEqualTo("When", "2021-05-06")
@@ -93,8 +115,6 @@ class MainActivity : AppCompatActivity() {
                 Log.w("DBtest", "Error getting documents: ", exception)
             }
         val intent = Intent(this, MapsActivity::class.java)
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
         val fragmentAdapter = MyPagerAdapter(supportFragmentManager)
         sample_content_fragment.adapter = fragmentAdapter
@@ -164,12 +184,47 @@ class MainActivity : AppCompatActivity() {
         nfcAdapter?.enableForegroundDispatch(this, nfcPendingIntent, null, null);
         // Alternative: only get specific HTTP NDEF intent
         //nfcAdapter?.enableForegroundDispatch(this, nfcPendingIntent, nfcIntentFilters, null);
+
+        locationRequest.run{
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            interval = 10000
+        }
+        locationCallback = object: LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+                locationResult?.let {
+                    for((i, location) in it.locations.withIndex()) {
+                        Log.d("mainloc", "#$i ${location.latitude} , ${location.longitude}")
+                        myLatitude = location.latitude
+                        myLongitude = location.longitude
+                    }
+                }
+            }
+        }
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
+
+        Log.d("myloc ", "lat:$myLatitude,Long:$myLongitude")
     }
 
     override fun onPause() {
         super.onPause()
         // Disable foreground dispatch, as this activity is no longer in the foreground
         nfcAdapter?.disableForegroundDispatch(this);
+
+        fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
     override fun onNewIntent(intent: Intent?) {
