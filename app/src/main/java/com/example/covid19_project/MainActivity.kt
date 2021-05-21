@@ -124,13 +124,31 @@ class MainActivity : AppCompatActivity() {
                     val timestamp = document.data.get("When") as Timestamp
                     val dateFormat = SimpleDateFormat("yyyy-MM-dd HH").format(timestamp.toDate())
                     Log.d("DBtest", "${document.data.get("Who")}, ${dateFormat}")
-
                 }
             }
             .addOnFailureListener { exception ->
                 Log.w("DBtest", "Error getting documents: ", exception)
             }
-
+        //delete old data
+        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection("Contacts")
+            .whereLessThan("When", currentLong.let{Date(it)})
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d("DBtest", "this user has ${documents.size()} old record(s)")
+                for (document in documents) {
+                    db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid)
+                        .collection("Contacts").document(document.id)
+                        .delete()
+                        .addOnSuccessListener {
+                            Log.d("DBtest",
+                                "DocumentSnapshot successfully deleted!")
+                        }
+                        .addOnFailureListener { e -> Log.w("DBtest", "Error deleting document", e) }
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.w("DBtest", "Error getting documents: ", exception)
+            }
         ////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////
 
