@@ -24,10 +24,13 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
 import com.example.covid19_project.Extensions.toast
 import com.google.android.gms.location.*
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.Timestamp
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.locationManager
 import java.text.ParsePosition
@@ -215,6 +218,33 @@ class MainActivity : AppCompatActivity() {
             }
             .addOnFailureListener {
                 toast("다이나믹 링크 동작 에러")
+            }
+
+        // 만약 토큰이 DB에 저장되어 있지 않으면 DB에 저장한다. 이미 저장되어있으면 아무런 작업도하지 않는다
+        db.collection("Users").document(Firebase.auth.currentUser.uid).get().addOnSuccessListener { document ->
+            if (document != null) {
+                if(document.get("Push_ID") == null) {
+                    FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+                        if (!task.isSuccessful) {
+                            toast("PUSH알림 토큰을 가져올때 문제가 발생했어요")
+                            return@OnCompleteListener
+                        }
+                        // token=현재 디바이스의 푸시 토큰
+                        val token = task.result
+
+                        db.collection("Users").document(Firebase.auth.currentUser.uid).update("Push_ID", token)
+                            .addOnSuccessListener { toast("푸시 ID 를 DB에 등록하였어요")}
+                            .addOnFailureListener { toast("푸시 ID 를 DB에 등록하지 못했어요") }
+                    })
+
+
+                }
+            } else {
+                toast("사용자의 DB가 존재하지 않아요")
+            }
+        }
+            .addOnFailureListener { exception ->
+                toast("DB접근에 실패하였어요")
             }
     }
 
