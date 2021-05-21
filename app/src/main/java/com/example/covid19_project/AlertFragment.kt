@@ -6,18 +6,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.messaging.Constants.MessagePayloadKeys.SENDER_ID
-import com.google.firebase.messaging.FirebaseMessaging
-import com.google.firebase.messaging.ktx.messaging
-import com.google.firebase.messaging.ktx.remoteMessage
 import kotlinx.android.synthetic.main.fragment_alert.*
 import java.text.SimpleDateFormat
 import java.util.*
-
 
 class AlertFragment : Fragment() {
     override fun onCreateView(

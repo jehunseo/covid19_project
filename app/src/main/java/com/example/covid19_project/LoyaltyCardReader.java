@@ -4,7 +4,6 @@ import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
 import android.util.Log;
-
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;

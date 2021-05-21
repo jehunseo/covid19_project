@@ -5,9 +5,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
-import com.google.maps.android.clustering.view.ClusterRenderer
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
-
 
 class MarkerClusterRenderer<T : ClusterItem> internal constructor(
     context: Context,

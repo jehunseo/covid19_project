@@ -1,18 +1,13 @@
 package com.example.covid19_project
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
 import android.net.Uri
 import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
-import android.os.Build
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
@@ -32,7 +27,6 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.android.synthetic.main.activity_main.*
-import org.jetbrains.anko.locationManager
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
 import java.util.*
@@ -48,7 +42,8 @@ class MainActivity : AppCompatActivity() {
     private var nfcPendingIntent: PendingIntent? = null
 
     private var locationRequest = LocationRequest.create()
-    val permissions = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+    val permissions = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION,
+        android.Manifest.permission.ACCESS_COARSE_LOCATION)
 
     ////////////////////////////////////////////////////////////////////////////////////
     //permission for location
@@ -77,15 +72,18 @@ class MainActivity : AppCompatActivity() {
     ////////////////////////////////////////////////////////////////
 
     private fun initLocation() {
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-            && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+            && ActivityCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+        ) {
             return
         }
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location ->
-                if(location == null) {
+                if (location == null) {
                     Log.e("mainloc", "location get fail")
                 } else {
                     Log.d("mainloc", "${location.latitude} , ${location.longitude}")
@@ -118,8 +116,9 @@ class MainActivity : AppCompatActivity() {
         val currentLong = currentDay.time - 1210000000 // 2주 전
 
         val db = Firebase.firestore
-        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection("Contacts")
-            .whereGreaterThan("When", currentLong.let{Date(it)})
+        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid)
+            .collection("Contacts")
+            .whereGreaterThan("When", currentLong.let { Date(it) })
             .get()
             .addOnSuccessListener { documents ->
                 Log.d("DBtest", "this user has ${documents.size()} contact record(s)")
@@ -133,8 +132,9 @@ class MainActivity : AppCompatActivity() {
                 Log.w("DBtest", "Error getting documents: ", exception)
             }
         //delete old data
-        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection("Contacts")
-            .whereLessThan("When", currentLong.let{Date(it)})
+        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid)
+            .collection("Contacts")
+            .whereLessThan("When", currentLong.let { Date(it) })
             .get()
             .addOnSuccessListener { documents ->
                 Log.d("DBtest", "this user has ${documents.size()} old record(s)")
@@ -206,12 +206,13 @@ class MainActivity : AppCompatActivity() {
                     val db = Firebase.firestore
                     val log_scanning = hashMapOf(
                         "Who" to who,
-                        "When" to currentLong.let{Date(it)}
+                        "When" to currentLong.let { Date(it) }
                     )
-                    db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
-                        "Contacts").add(log_scanning)
-                        .addOnSuccessListener {toast(who +"와의 접촉 기록이 저장되었어요")}
-                        .addOnFailureListener {toast("접촉 기록 저장 실패")}
+                    db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid)
+                        .collection(
+                            "Contacts").add(log_scanning)
+                        .addOnSuccessListener { toast(who + "와의 접촉 기록이 저장되었어요") }
+                        .addOnFailureListener { toast("접촉 기록 저장 실패") }
                 } else {
                 }
 
@@ -221,28 +222,31 @@ class MainActivity : AppCompatActivity() {
             }
 
         // 만약 토큰이 DB에 저장되어 있지 않으면 DB에 저장한다. 이미 저장되어있으면 아무런 작업도하지 않는다
-        db.collection("Users").document(Firebase.auth.currentUser.uid).get().addOnSuccessListener { document ->
-            if (document != null) {
-                if(document.get("Push_ID") == null) {
-                    FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
-                        if (!task.isSuccessful) {
-                            toast("PUSH알림 토큰을 가져올때 문제가 발생했어요")
-                            return@OnCompleteListener
-                        }
-                        // token=현재 디바이스의 푸시 토큰
-                        val token = task.result
+        db.collection("Users").document(Firebase.auth.currentUser.uid).get()
+            .addOnSuccessListener { document ->
+                if (document != null) {
+                    if (document.get("Push_ID") == null) {
+                        FirebaseMessaging.getInstance().token.addOnCompleteListener(
+                            OnCompleteListener { task ->
+                                if (!task.isSuccessful) {
+                                    toast("PUSH알림 토큰을 가져올때 문제가 발생했어요")
+                                    return@OnCompleteListener
+                                }
+                                // token=현재 디바이스의 푸시 토큰
+                                val token = task.result
 
-                        db.collection("Users").document(Firebase.auth.currentUser.uid).update("Push_ID", token)
-                            .addOnSuccessListener { toast("푸시 ID 를 DB에 등록하였어요")}
-                            .addOnFailureListener { toast("푸시 ID 를 DB에 등록하지 못했어요") }
-                    })
+                                db.collection("Users").document(Firebase.auth.currentUser.uid)
+                                    .update("Push_ID", token)
+                                    .addOnSuccessListener { toast("푸시 ID 를 DB에 등록하였어요") }
+                                    .addOnFailureListener { toast("푸시 ID 를 DB에 등록하지 못했어요") }
+                            })
 
 
+                    }
+                } else {
+                    toast("사용자의 DB가 존재하지 않아요")
                 }
-            } else {
-                toast("사용자의 DB가 존재하지 않아요")
             }
-        }
             .addOnFailureListener { exception ->
                 toast("DB접근에 실패하였어요")
             }
@@ -257,14 +261,14 @@ class MainActivity : AppCompatActivity() {
         //nfcAdapter?.enableForegroundDispatch(this, nfcPendingIntent, nfcIntentFilters, null);
 
 
-        locationRequest.run{
+        locationRequest.run {
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
             interval = 10000
         }
-        locationCallback = object: LocationCallback() {
+        locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult?.let {
-                    for((i, location) in it.locations.withIndex()) {
+                    for ((i, location) in it.locations.withIndex()) {
                         Log.d("mainloc", "#$i ${location.latitude} , ${location.longitude}")
                         myLatitude = location.latitude
                         myLongitude = location.longitude
@@ -286,7 +290,9 @@ class MainActivity : AppCompatActivity() {
             // for ActivityCompat#requestPermissions for more details.
             return
         }
-        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
+        fusedLocationClient.requestLocationUpdates(locationRequest,
+            locationCallback,
+            Looper.myLooper())
 
         Log.d("myloc ", "lat:$myLatitude,Long:$myLongitude")
     }
@@ -350,7 +356,7 @@ class MainActivity : AppCompatActivity() {
                         text = curRecord.payload.contentToString()
                         text = text.substring(1, text.length - 1).replace(",", "")
                         var tmp = text.split(" ")
-                        var content : String = ""
+                        var content: String = ""
 
                         for (t in tmp.slice(IntRange(3, tmp.size - 1))) {
                             content += t.toInt().toChar()
@@ -359,7 +365,7 @@ class MainActivity : AppCompatActivity() {
                         val addtag = AddTag(applicationContext,
                             FirebaseUtils.firebaseAuth.currentUser.uid,
                             content,
-                            currentLong.let{Date(it)}
+                            currentLong.let { Date(it) }
                         )
                         addtag.start()
                     }
@@ -383,26 +389,9 @@ class MainActivity : AppCompatActivity() {
         }
         backPressedTime = System.currentTimeMillis()
     }
-
-
-
 }
 
 // Bluetooth Reference : https://developer.android.com/guide/topics/connectivity/bluetooth
-
-class GetTag(val context: Context) : Thread() {
-    override fun run() {
-        val items = TagDatabase
-            .getInstance(context)!!
-            .getTagDao()
-            .getAll()
-
-        for (i in items) {
-            Log.d("bookList", "${i.tag_main} | ${i.tag_sub} | ${i.time}")
-        }
-    }
-}
-
 class AddTag(
     val context: Context,
     val tag_main: String,

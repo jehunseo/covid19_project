@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.google.android.gms.maps.MapView
 
-
 class MapFragment : Fragment() {
     private lateinit var mapView: MapView
     override fun onCreateView(

@@ -2,11 +2,9 @@ package com.example.covid19_project
 
 import android.content.ContentValues.TAG
 import kotlinx.android.synthetic.main.activity_create_account.*
-
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.widget.CheckBox
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
@@ -17,7 +15,6 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.android.synthetic.main.activity_create_account.*
 
 class CreateAccountActivity : AppCompatActivity() {
     lateinit var userEmail: String

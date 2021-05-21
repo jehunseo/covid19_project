@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
