@@ -73,6 +73,8 @@ class QRFragment : Fragment() {
             integrator.setPrompt("QR을 인식해주세요!!"); //QR코드 화면이 되면 밑에 표시되는 글씨 바꿀수있음
             integrator.initiateScan();
         }
+
+        //NFC 리더기 동작
         nfcToggleButton.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 if (savedInstanceState == null) {
@@ -85,24 +87,20 @@ class QRFragment : Fragment() {
 
                     setFragmentResultListener("account") { key, bundle ->
                         val result = bundle.getString("account")
-
                         val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
                         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
-                        val currentDay = dateFormat.parse(sdf, ParsePosition(0))
-                        val currentLong = currentDay.time
+                        val currentLong = dateFormat.parse(sdf, ParsePosition(0)).time
 
-                        Log.d("timestr", sdf)
-                        Log.d("timelong", currentLong.toString())
                         // 디바이스 내부 DB에도 저장하고, 그리고 각 유저의 클라우드 DB에도 저장해보자
                         // 현재 QR코드를 촬영한 유저의 클라우드 DB에 접촉 기록을 저장
                         val db = Firebase.firestore
                         // 위치정보 수집 동의 값 가져오기
-                        val log_scanning = hashMapOf(
+                        var log_scanning = hashMapOf(
                             "Who" to result,
                             "When" to currentLong.let{Date(it)},
                             "Lat" to myLatitude,
-                            "Long" to myLongitude
-                            
+                            "Long" to myLongitude,
+                            "Loc_Store_Agree" to true
                         )
                         db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
                             "Contacts").add(log_scanning)
@@ -154,24 +152,23 @@ class QRFragment : Fragment() {
             } else {
                 val scanned = result.getContents()
                 val scanned_uid = scanned.replace("https://ajouunivcovid19.page.link?apn=com.example.covid19_project&link=https%3A%2F%2Fajouycdcovid19.com%2Fmeet/","")
-
+                Log.d("dd", scanned_uid)
                 val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
-                val currentDay = dateFormat.parse(sdf, ParsePosition(0))
-                val currentLong = currentDay.time
+                val currentLong = dateFormat.parse(sdf, ParsePosition(0)).time
 
                 // 디바이스 내부 DB에도 저장하고, 그리고 각 유저의 클라우드 DB에도 저장해보자
                 // 현재 QR코드를 촬영한 유저의 클라우드 DB에 접촉 기록을 저장
                 val db = Firebase.firestore
                 // 위치정보 수집 동의 값 가져오기
-                val log_scanning = hashMapOf(
+                // 접촉기록 collection
+                var log_scanning = hashMapOf(
                     "Who" to scanned_uid,
                     "When" to currentLong.let{Date(it)},
                     "Lat" to myLatitude,
                     "Long" to myLongitude,
                     "Loc_Store_Agree" to true
                 )
-
                 db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
                     "Contacts").add(log_scanning)
                     .addOnSuccessListener { Toast.makeText(requireActivity(),
@@ -180,6 +177,25 @@ class QRFragment : Fragment() {
                     .addOnFailureListener { Toast.makeText(requireActivity(),
                         "접촉 기록 저장 실패",
                         Toast.LENGTH_SHORT).show() }
+
+                //피접촉 collection
+                log_scanning = hashMapOf(
+                    "Who" to FirebaseUtils.firebaseAuth.currentUser.uid,
+                    "When" to currentLong.let{Date(it)},
+                    "Lat" to myLatitude,
+                    "Long" to myLongitude,
+                    "Loc_Store_Agree" to true
+                )
+
+                db.collection("Users").document(scanned_uid).collection(
+                    "Contacts").add(log_scanning)
+                    .addOnSuccessListener { Toast.makeText(requireActivity(),
+                        "접촉 기록이 저장되었어요",
+                        Toast.LENGTH_SHORT).show() }
+                    .addOnFailureListener { Toast.makeText(requireActivity(),
+                        "접촉 기록 저장 실패",
+                        Toast.LENGTH_SHORT).show() }
+
                 // 클라우드 DB부분 코드 끝!
                 val addtag = AddTagQR(
                     requireContext(),

@@ -116,21 +116,6 @@ class MainActivity : AppCompatActivity() {
         val currentLong = currentDay.time - 1210000000 // 2주 전
 
         val db = Firebase.firestore
-        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid)
-            .collection("Contacts")
-            .whereGreaterThan("When", currentLong.let { Date(it) })
-            .get()
-            .addOnSuccessListener { documents ->
-                Log.d("DBtest", "this user has ${documents.size()} contact record(s)")
-                for (document in documents) {
-                    val timestamp = document.data.get("When") as Timestamp
-                    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH").format(timestamp.toDate())
-                    Log.d("DBtest", "${document.data.get("Who")}, ${dateFormat}")
-                }
-            }
-            .addOnFailureListener { exception ->
-                Log.w("DBtest", "Error getting documents: ", exception)
-            }
         //delete old data
         db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid)
             .collection("Contacts")
@@ -340,35 +325,25 @@ class MainActivity : AppCompatActivity() {
             if (curMsg != null) {
                 // Loop through all the records contained in the message
                 for (curRecord in curMsg.records) {
-                    if (curRecord.toUri() != null) {
-                        // URI NDEF Tag
-                        var url = curRecord.toUri().toString()
-                        Log.d("NFC5", "- URI : " + url)
+                    // Other NDEF Tags - simply print the payload
+                    val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
+                    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
+                    val currentLong = dateFormat.parse(sdf, ParsePosition(0)).time
 
-                    } else {
-                        // Other NDEF Tags - simply print the payload
-                        val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
-                        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
-                        val currentDay = dateFormat.parse(sdf, ParsePosition(0))
-                        val currentLong = currentDay.time
+                    var text = curRecord.payload.contentToString()
+                    text = text.substring(1, text.length - 1).replace(",", "")
+                    var tmp = text.split(" ")
+                    var content: String = ""
 
-                        var text = ""
-                        text = curRecord.payload.contentToString()
-                        text = text.substring(1, text.length - 1).replace(",", "")
-                        var tmp = text.split(" ")
-                        var content: String = ""
-
-                        for (t in tmp.slice(IntRange(3, tmp.size - 1))) {
-                            content += t.toInt().toChar()
-                        }
-                        Log.d("NFC6", "- URI : " + content)
-                        val addtag = AddTag(applicationContext,
-                            FirebaseUtils.firebaseAuth.currentUser.uid,
-                            content,
-                            currentLong.let { Date(it) }
-                        )
-                        addtag.start()
+                    for (t in tmp.slice(IntRange(3, tmp.size - 1))) {
+                        content += t.toInt().toChar()
                     }
+                    val addtag = AddTag(applicationContext,
+                        FirebaseUtils.firebaseAuth.currentUser.uid,
+                        content,
+                        currentLong.let { Date(it) }
+                    )
+                    addtag.start()
                 }
             }
         }
