@@ -1,9 +1,11 @@
 package com.example.covid19_project
 
+import android.Manifest
 import android.content.Intent
 import android.os.Bundle
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import com.example.covid19_project.Extensions.toast
 import com.example.covid19_project.FirebaseUtils.firebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -15,10 +17,19 @@ class SignInActivity : AppCompatActivity() {
     lateinit var signInPassword: String
     lateinit var signInInputsArray: Array<EditText>
 
+    private val permissionLocation = arrayOf(
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.ACCESS_FINE_LOCATION
+    )
+
+    private fun requestPermission() {
+        ActivityCompat.requestPermissions(this, permissionLocation, 99)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sign_in)
-
+        requestPermission()
         signInInputsArray = arrayOf(etSignInEmail, etSignInPassword)
         btnCreateAccount2.setOnClickListener {
             startActivity(Intent(this, CreateAccountActivity::class.java))

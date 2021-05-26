@@ -139,13 +139,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .get().addOnSuccessListener { documents ->            //위의 조건을 만족한 document(User uid)들을 불러와서
                 for(document in documents) { //document를 하나씩 반복문으로 돌린다.
                     val name = document.getString("Who")  //name 변수에 현재 돌리는 document의 who을 넣는다
-                    val contactTime = document.getString("When")
+                    val contactTime = document.getTimestamp("When")
                     if(document.getDouble("Lat")!=null && document.getDouble("Long")!=null) {
                         // field의 Lat, Lng 가 null이 아닌경우에 제한, 이렇게 하지 않으면 지도가 튕김....
                         val lat = document.getDouble("Lat")!!
                         val lng = document.getDouble("Long")!!
                         val descriptor = getDescriptorFromDrawable(R.drawable.redcirlce) //접촉자 마커 모양 설정
-                        val marker = MarkerOptions().position(LatLng(lat,lng)).title(contactTime).icon(descriptor) //marker 정의
+                        val marker = MarkerOptions().position(LatLng(lat,lng)).title(null).icon(descriptor) //marker 정의
                         markerList2.add(marker)
                         //mMap.addMarker(marker)
                         Log.d("마킹3", "위도: ${lat}, 경도: ${lng}, contact: ${name}")
