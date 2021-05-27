@@ -40,7 +40,7 @@ var dataPosition4 = DataPosition ( "4", 37.2, 128.5)
 var dataPosition5 = DataPosition ( "5", 37.3, 129.0)
 var dataPosition6 = DataPosition ( "6", 37.9, 127.4)
 var dataPosition7 = DataPosition ( "7", 37.7, 126.9)
-public var myPos =(LatLng(myLatitude, myLongitude))
+var myPos =(LatLng(myLatitude, myLongitude))
 var posArray = arrayListOf<DataPosition>(dataPosition, dataPosition2, dataPosition3, dataPosition4,
     dataPosition5, dataPosition6, dataPosition7)
 
@@ -180,13 +180,67 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap){
         mMap = googleMap
-        clusterManager = ClusterManager(this, googleMap)
-        addMarkers()
-        contact_btn.setOnClickListener {
-            ContactsMmarker()
-        }
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setupdateLocationListner()
+        clusterManager = ClusterManager(this, googleMap)
+        addMarkers()
+        mypos_btn.setOnCheckedChangeListener{ _, ischecked ->
+            if(ischecked) {
+                setupdateLocationListner()
+                val descriptor = getDescriptorFromDrawable(R.drawable.marker)
+                val marker = MarkerOptions()
+                    .position(myPos)
+                    .title("myPosition")
+                    .icon(descriptor)
+                mMap.addMarker(marker)
+            }
+            else{
+                if(contact_btn.isChecked){
+                    mMap.clear()
+                    markerList.clear()
+                    markerList2.clear()
+                    clusterManager = ClusterManager(this, googleMap)
+                    addMarkers()
+                    ContactsMmarker()
+                }
+                else{
+                    mMap.clear()
+                    markerList.clear()
+                    markerList2.clear()
+                    clusterManager = ClusterManager(this, googleMap)
+                    addMarkers()
+                }
+            }
+        }
+        contact_btn.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                ContactsMmarker()
+            }
+            else{
+                if(mypos_btn.isChecked){
+                    mMap.clear()
+                    markerList.clear()
+                    markerList2.clear()
+                    setupdateLocationListner()
+                    val descriptor = getDescriptorFromDrawable(R.drawable.marker)
+                    val marker = MarkerOptions()
+                        .position(myPos)
+                        .title("myPosition")
+                        .icon(descriptor)
+                    mMap.addMarker(marker)
+                    clusterManager = ClusterManager(this, googleMap)
+                    addMarkers()
+                }
+                else{
+                    mMap.clear()
+                    markerList.clear()
+                    markerList2.clear()
+                    clusterManager = ClusterManager(this, googleMap)
+                    addMarkers()
+                }
+            }
+        }
+
     }
 
     private fun setupClusterManager() {
@@ -238,7 +292,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 locationResult?.let {
                     for ((i, location) in it.locations.withIndex()) {//튜플기능으로 index와 함께 꺼내쓸수 있음
                         Log.d("로케이션", "$i ${location.latitude} ${location.longitude}")
-                        setLastLocation(location)
+                        myPos = LatLng(location.latitude,location.longitude)
+                        //setLastLocation(location)
                         val docRef = db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid)
                         docRef.get()
                             .addOnSuccessListener { document ->
