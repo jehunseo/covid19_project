@@ -11,6 +11,7 @@ import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -19,10 +20,13 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
 import com.example.covid19_project.Extensions.toast
 import com.google.android.gms.location.*
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
@@ -44,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private var locationRequest = LocationRequest.create()
     val permissions = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION,
         android.Manifest.permission.ACCESS_COARSE_LOCATION)
+    private val db = FirebaseFirestore.getInstance()  //firestore db
 
     ////////////////////////////////////////////////////////////////////////////////////
     //permission for location
@@ -103,7 +108,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        //requestPermission()
+        requestPermission()
         initLocation()
 
         ////////////////////////////////////////////////////////////////////////////////////
@@ -223,32 +228,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        setupdateLocationListner()
         nfcAdapter?.enableForegroundDispatch(this, nfcPendingIntent, null, null);
-        locationRequest.run {
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            interval = 10000
-        }
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
-                locationResult?.let {
-                    for ((i, location) in it.locations.withIndex()) {
-                        Log.d("mainloc", "#$i ${location.latitude} , ${location.longitude}")
-                        myLatitude = location.latitude
-                        myLongitude = location.longitude
-                    }
-                }
-            }
-        }
-        if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-        fusedLocationClient.requestLocationUpdates(locationRequest,
-            locationCallback,
-            Looper.myLooper())
+
         Log.d("myloc ", "lat:$myLatitude,Long:$myLongitude")
     }
 
@@ -258,6 +240,8 @@ class MainActivity : AppCompatActivity() {
         nfcAdapter?.disableForegroundDispatch(this);
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
+
+
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
@@ -277,6 +261,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        setupdateLocationListner()
     }
 
     private fun processNdefMessages(ndefMessages: Array<NdefMessage?>) {
@@ -318,6 +307,77 @@ class MainActivity : AppCompatActivity() {
             backToast.show()
         }
         backPressedTime = System.currentTimeMillis()
+    }
+
+
+    fun setupdateLocationListner() {
+        val locationRequest = LocationRequest.create()
+        locationRequest.run {
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY //정확도를 높이 하겠다.
+            interval = 10000 //10초
+        }
+
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+                locationResult?.let {
+                    for ((i, location) in it.locations.withIndex()) {//튜플기능으로 index와 함께 꺼내쓸수 있음
+                        Log.d("로케이션", "$i ${location.latitude} ${location.longitude}")
+                        myLatitude = location.latitude
+                        myLongitude = location.longitude
+                        myPos = LatLng(location.latitude,location.longitude)
+                        //setLastLocation(location)
+                        val docRef = db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid)
+                        docRef.get()
+                            .addOnSuccessListener { document ->
+                                if (document != null) {
+                                    val Loc_Store_Agree_value = document.getBoolean("Loc_Store_Agree")
+                                    if(Loc_Store_Agree_value == true)
+                                    {
+                                        val data = hashMapOf("Lat" to location.latitude,"Long" to location.longitude)   //Firestore 필드 : 위도, 경도 (내 위치)
+                                        // 기생성된 Users 컬렉션의 각 멤버 문서에 종속되는 컬렉션 Location에 위치 데이터 저장하기
+                                        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).set(data, SetOptions.merge())  //firestore에 data 삽입
+                                        //toast("익명의 위치정보가 안전하게 저장되었어요")
+                                    }else{
+                                        //toast("위치정보는 저장되지 않아요")
+                                    }
+                                } else {
+                                    //toast("가입 정보가 DB에 없어요")
+                                }
+                            }
+                            .addOnFailureListener { exception ->
+                                //toast("DB 접근 실패")
+                            }
+                    }
+                }
+            }
+        }
+
+        // 로케이션 요청 함수 호출 (locationRequest, locationCallback
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
+    }
+
+    fun serviceStart(view:View){
+        val intent = Intent(this, Foreground::class.java)
+        ContextCompat.startForegroundService(this,intent)
+    }
+
+    fun serviceStop(view:View){
+        val intent = Intent(this, Foreground::class.java)
+        stopService(intent)
     }
 }
 

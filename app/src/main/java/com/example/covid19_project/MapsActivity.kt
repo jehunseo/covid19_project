@@ -286,7 +286,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             interval = 10000 //10초
         }
 
-
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult?.let {
@@ -326,20 +325,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     //마커 , 카메라이동
     fun setLastLocation(location : Location) {
-        /*
-        var i = 0
-        for(i in 0 until posArray.size ){
-            val locations = LatLng(posArray.get(i).Lat, posArray.get(i).long)
-            val marker = MarkerOptions()
-                .position(locations)
-            val cameraOption = CameraPosition.Builder()
-                .target(LatLng(37.0, 137.0))
-                .zoom(15.0f)
-                .build()
-            val camera = CameraUpdateFactory.newCameraPosition(cameraOption)
-            mMap.addMarker(marker)
-        }
-        */
         val mymarker = LatLng(location.latitude,location.longitude) //내 좌표
         myPos = mymarker
         val descriptor = getDescriptorFromDrawable(R.drawable.marker)
@@ -348,8 +333,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .title("myPosition")
             .icon(descriptor)
         mMap.addMarker(marker)
-
-
     }
 
     fun getDescriptorFromDrawable(drawableID : Int) : BitmapDescriptor{
@@ -363,6 +346,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val scaledBitmap = Bitmap.createScaledBitmap(bitmapDrawable.bitmap, 100,100, false)
         return BitmapDescriptorFactory.fromBitmap(scaledBitmap)
     } //마커 모양 및 크기 변경 함수
+
 
 
 
