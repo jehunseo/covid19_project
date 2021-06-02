@@ -50,9 +50,10 @@ class AlertFragment : Fragment() {
                 val currentDay = dateFormat.parse(sdf, ParsePosition(0))
                 val currentLong = currentDay.time - 1210000000 // 2주 전
 
+                val myUid = FirebaseUtils.firebaseAuth.currentUser.uid
                 val db = Firebase.firestore
 
-                db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid)
+                db.collection("Users").document(myUid)
                     .collection("Contacts")
                     .whereGreaterThan("When", currentLong.let { Date(it) })
                     .get()

@@ -3,6 +3,7 @@ package com.example.covid19_project
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -12,6 +13,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
 import android.widget.ToggleButton
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import com.google.firebase.dynamiclinks.DynamicLink
@@ -26,6 +28,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class QRFragment : Fragment() {
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
@@ -43,6 +46,8 @@ class QRFragment : Fragment() {
         val SHORT_DYNAMIC_LINK = "https://ajouunivcovid19.page.link"
         val PACKAGE_NAME = "com.example.covid19_project"
 
+        val myUid = FirebaseUtils.firebaseAuth.currentUser.uid
+
         fun createDynamicLink(): String {
             return FirebaseDynamicLinks.getInstance()
                 .createDynamicLink()
@@ -53,7 +58,7 @@ class QRFragment : Fragment() {
                         .build()
                 )
                 .buildDynamicLink()
-                .uri.toString() + "meet/" +  FirebaseUtils.firebaseAuth.currentUser.uid //  https://ajoucovid19.com/meet/접촉UID
+                .uri.toString() + "meet/" +  myUid //  https://ajoucovid19.com/meet/접촉UID
         }
         // 다이나믹 링크 생성 부분 끝
 
@@ -87,9 +92,6 @@ class QRFragment : Fragment() {
 
                     setFragmentResultListener("account") { key, bundle ->
                         val result = bundle.getString("account")
-                        val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
-                        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
-                        val currentLong = dateFormat.parse(sdf, ParsePosition(0)).time
 
                         // 디바이스 내부 DB에도 저장하고, 그리고 각 유저의 클라우드 DB에도 저장해보자
                         // 현재 QR코드를 촬영한 유저의 클라우드 DB에 접촉 기록을 저장
@@ -97,12 +99,12 @@ class QRFragment : Fragment() {
                         // 위치정보 수집 동의 값 가져오기
                         var log_scanning = hashMapOf(
                             "Who" to result,
-                            "When" to currentLong.let{Date(it)},
+                            "When" to getNowTime().let{Date(it)},
                             "Lat" to myLatitude,
                             "Long" to myLongitude,
                             "Loc_Store_Agree" to true
                         )
-                        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid).collection(
+                        db.collection("Users").document(myUid).collection(
                             "Contacts").add(log_scanning)
                             .addOnSuccessListener { Toast.makeText(requireActivity(),
                                 "접촉 기록이 저장되었어요",
@@ -111,14 +113,24 @@ class QRFragment : Fragment() {
                                 "접촉 기록 저장 실패",
                                 Toast.LENGTH_SHORT).show() }
 
-                        val addtag = AddTagQR(
+                        //피접촉 기록 저장
+                        log_scanning.replace("Who", myUid)
+
+                        db.collection("Users").document(result!!).collection(
+                            "Contacts").add(log_scanning)
+                            .addOnSuccessListener { Toast.makeText(requireActivity(),
+                                "접촉 기록이 저장되었어요",
+                                Toast.LENGTH_SHORT).show() }
+                            .addOnFailureListener { Toast.makeText(requireActivity(),
+                                "접촉 기록 저장 실패",
+                                Toast.LENGTH_SHORT).show() }
+
+                        AddTagQR(
                             requireContext(),
-                            FirebaseUtils.firebaseAuth.currentUser.uid,
+                            myUid,
                             result,
-                            currentLong.let{Date(it)}
-                        )
-                        Log.d("QRFragment", "${FirebaseUtils.firebaseAuth.currentUser.uid}||${result}")
-                        addtag.start()
+                            getNowTime().let{Date(it)}
+                        ).start()
                     }
 
                 }
@@ -126,7 +138,7 @@ class QRFragment : Fragment() {
                 activity?.supportFragmentManager?.beginTransaction()
                     ?.remove(fragment)
                     ?.commit()
-                AccountStorage.SetAccount(activity, FirebaseUtils.firebaseAuth.currentUser.uid)
+                AccountStorage.SetAccount(activity, myUid)
             }
         }
 
@@ -138,6 +150,7 @@ class QRFragment : Fragment() {
         super.onCreate(savedInstanceState)
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onActivityResult(
         requestCode: Int,
         resultCode: Int,
@@ -151,11 +164,10 @@ class QRFragment : Fragment() {
                 Toast.makeText(getActivity(), "Cancelled", Toast.LENGTH_LONG).show()
             } else {
                 val scanned = result.getContents()
-                val scanned_uid = scanned.replace("https://ajouunivcovid19.page.link?apn=com.example.covid19_project&link=https%3A%2F%2Fajouycdcovid19.com%2Fmeet/","")
-                Log.d("dd", scanned_uid)
-                val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
-                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
-                val currentLong = dateFormat.parse(sdf, ParsePosition(0)).time
+                val scanned_uid = scanned.replace(
+                    "https://ajouunivcovid19.page.link?apn=com.example.covid19_project&link=https%3A%2F%2Fajouycdcovid19.com%2Fmeet/",
+                    ""
+                )
 
                 // 디바이스 내부 DB에도 저장하고, 그리고 각 유저의 클라우드 DB에도 저장해보자
                 // 현재 QR코드를 촬영한 유저의 클라우드 DB에 접촉 기록을 저장
@@ -164,7 +176,7 @@ class QRFragment : Fragment() {
                 // 접촉기록 collection
                 var log_scanning = hashMapOf(
                     "Who" to scanned_uid,
-                    "When" to currentLong.let{Date(it)},
+                    "When" to getNowTime().let{Date(it)},
                     "Lat" to myLatitude,
                     "Long" to myLongitude,
                     "Loc_Store_Agree" to true
@@ -178,14 +190,8 @@ class QRFragment : Fragment() {
                         "접촉 기록 저장 실패",
                         Toast.LENGTH_SHORT).show() }
 
-                //피접촉 collection
-                log_scanning = hashMapOf(
-                    "Who" to FirebaseUtils.firebaseAuth.currentUser.uid,
-                    "When" to currentLong.let{Date(it)},
-                    "Lat" to myLatitude,
-                    "Long" to myLongitude,
-                    "Loc_Store_Agree" to true
-                )
+                //피접촉 collection - Who와 document uid를 맞바꿈
+                log_scanning.replace("Who", FirebaseUtils.firebaseAuth.currentUser.uid)
 
                 db.collection("Users").document(scanned_uid).collection(
                     "Contacts").add(log_scanning)
@@ -197,13 +203,12 @@ class QRFragment : Fragment() {
                         Toast.LENGTH_SHORT).show() }
 
                 // 클라우드 DB부분 코드 끝!
-                val addtag = AddTagQR(
+                AddTagQR(
                     requireContext(),
                     FirebaseUtils.firebaseAuth.currentUser.uid,
                     scanned_uid,
-                    currentLong.let{Date(it)}
-                )
-                addtag.start()
+                    getNowTime().let{Date(it)}
+                ).start()
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data)

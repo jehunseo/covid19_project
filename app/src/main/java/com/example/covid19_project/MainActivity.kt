@@ -98,7 +98,6 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-
     ////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -109,22 +108,18 @@ class MainActivity : AppCompatActivity() {
 
         ////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////
-        //test
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
-        val currentDay = dateFormat.parse(sdf, ParsePosition(0))
-        val currentLong = currentDay.time - 1210000000 // 2주 전
-
+        val myUid = FirebaseUtils.firebaseAuth.currentUser.uid
         val db = Firebase.firestore
+
         //delete old data
-        db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid)
+        db.collection("Users").document(myUid)
             .collection("Contacts")
-            .whereLessThan("When", currentLong.let { Date(it) })
+            .whereLessThan("When", getNowTime().let { Date(it) })
             .get()
             .addOnSuccessListener { documents ->
                 Log.d("DBtest", "this user has ${documents.size()} old record(s)")
                 for (document in documents) {
-                    db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid)
+                    db.collection("Users").document(myUid)
                         .collection("Contacts").document(document.id)
                         .delete()
                         .addOnSuccessListener {
@@ -139,7 +134,6 @@ class MainActivity : AppCompatActivity() {
             }
         ////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////
-
         val intent = Intent(this, MapsActivity::class.java)
         val fragmentAdapter = MyPagerAdapter(supportFragmentManager)
         sample_content_fragment.adapter = fragmentAdapter
@@ -151,9 +145,9 @@ class MainActivity : AppCompatActivity() {
         } //tap에서 mapfragment 제거 후 해당 위치 map Activity로 대체
         requestQueue = Volley.newRequestQueue(this)
 
-        /////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////
         //NFC Check////////////////////////////////////////////////////////////////////////////
-        /////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         nfcPendingIntent = PendingIntent.getActivity(this, 0,
             Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0)
@@ -183,31 +177,23 @@ class MainActivity : AppCompatActivity() {
                     deppLink = it.link
                     val who = deppLink!!.path!!.replace("/meet/", "")
                     // 접촉 기록 저장 시작
-                    val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
-                    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
-                    val currentDay = dateFormat.parse(sdf, ParsePosition(0))
-                    val currentLong = currentDay.time
-
-                    val db = Firebase.firestore
                     val log_scanning = hashMapOf(
                         "Who" to who,
-                        "When" to currentLong.let { Date(it) }
+                        "When" to getNowTime().let { Date(it) }
                     )
-                    db.collection("Users").document(FirebaseUtils.firebaseAuth.currentUser.uid)
+                    db.collection("Users").document(myUid)
                         .collection(
                             "Contacts").add(log_scanning)
                         .addOnSuccessListener { toast(who + "와의 접촉 기록이 저장되었어요") }
                         .addOnFailureListener { toast("접촉 기록 저장 실패") }
-                } else {
                 }
-
             }
             .addOnFailureListener {
                 toast("다이나믹 링크 동작 에러")
             }
 
         // 만약 토큰이 DB에 저장되어 있지 않으면 DB에 저장한다. 이미 저장되어있으면 아무런 작업도하지 않는다
-        db.collection("Users").document(Firebase.auth.currentUser.uid).get()
+        db.collection("Users").document(myUid).get()
             .addOnSuccessListener { document ->
                 if (document != null) {
                     if (document.get("Push_ID") == null) {
@@ -220,13 +206,11 @@ class MainActivity : AppCompatActivity() {
                                 // token=현재 디바이스의 푸시 토큰
                                 val token = task.result
 
-                                db.collection("Users").document(Firebase.auth.currentUser.uid)
+                                db.collection("Users").document(myUid)
                                     .update("Push_ID", token)
                                     .addOnSuccessListener { toast("푸시 ID 를 DB에 등록하였어요") }
                                     .addOnFailureListener { toast("푸시 ID 를 DB에 등록하지 못했어요") }
                             })
-
-
                     }
                 } else {
                     toast("사용자의 DB가 존재하지 않아요")
@@ -239,13 +223,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Get all NDEF discovered intents
-        // Makes sure the app gets all discovered NDEF messages as long as it's in the foreground.
         nfcAdapter?.enableForegroundDispatch(this, nfcPendingIntent, null, null);
-        // Alternative: only get specific HTTP NDEF intent
-        //nfcAdapter?.enableForegroundDispatch(this, nfcPendingIntent, nfcIntentFilters, null);
-
-
         locationRequest.run {
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
             interval = 10000
@@ -266,19 +244,11 @@ class MainActivity : AppCompatActivity() {
                 this,
                 Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
         ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return
         }
         fusedLocationClient.requestLocationUpdates(locationRequest,
             locationCallback,
             Looper.myLooper())
-
         Log.d("myloc ", "lat:$myLatitude,Long:$myLongitude")
     }
 
@@ -286,50 +256,35 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         // Disable foreground dispatch, as this activity is no longer in the foreground
         nfcAdapter?.disableForegroundDispatch(this);
-
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        if (intent != null) processIntent(intent)
-    }
-
-    private fun processIntent(checkIntent: Intent) {
-        // Check if intent has the action of a discovered NFC tag
-        // with NDEF formatted contents
-        if (checkIntent.action == NfcAdapter.ACTION_NDEF_DISCOVERED) {
-            // Retrieve the raw NDEF message from the tag
-            val rawMessages = checkIntent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
-            Log.d("NFC2", "Raw messages" + rawMessages?.size.toString())
-
-            // Complete variant: parse NDEF messages
-            if (rawMessages != null) {
-                val messages =
-                    arrayOfNulls<NdefMessage?>(rawMessages.size)// Array<NdefMessage>(rawMessages.size, {})
-                for (i in rawMessages.indices) {
-                    messages[i] = rawMessages[i] as NdefMessage;
+        if (intent != null) {
+            if (intent.action == NfcAdapter.ACTION_NDEF_DISCOVERED) {
+                // Retrieve the raw NDEF message from the tag
+                val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
+                // Complete variant: parse NDEF messages
+                if (rawMessages != null) {
+                    val messages =
+                        arrayOfNulls<NdefMessage?>(rawMessages.size)// Array<NdefMessage>(rawMessages.size, {})
+                    for (i in rawMessages.indices) {
+                        messages[i] = rawMessages[i] as NdefMessage;
+                    }
+                    // Process the messages array.
+                    processNdefMessages(messages)
                 }
-                // Process the messages array.
-                processNdefMessages(messages)
             }
         }
     }
 
-    /**
-     * Parse the NDEF message contents and print these to the on-screen log.
-     */
     private fun processNdefMessages(ndefMessages: Array<NdefMessage?>) {
         // Go through all NDEF messages found on the NFC tag
         for (curMsg in ndefMessages) {
             if (curMsg != null) {
                 // Loop through all the records contained in the message
                 for (curRecord in curMsg.records) {
-                    // Other NDEF Tags - simply print the payload
-                    val sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
-                    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
-                    val currentLong = dateFormat.parse(sdf, ParsePosition(0)).time
-
                     var text = curRecord.payload.contentToString()
                     text = text.substring(1, text.length - 1).replace(",", "")
                     var tmp = text.split(" ")
@@ -341,7 +296,7 @@ class MainActivity : AppCompatActivity() {
                     val addtag = AddTag(applicationContext,
                         FirebaseUtils.firebaseAuth.currentUser.uid,
                         content,
-                        currentLong.let { Date(it) }
+                        getNowTime().let { Date(it) }
                     )
                     addtag.start()
                 }
@@ -380,4 +335,12 @@ class AddTag(
             .getTagDao()
             .insert(tag)
     }
+}
+
+fun getNowTime():Long{
+    var sdf = SimpleDateFormat("yyyy-MM-dd HH", Locale.KOREA).format(Date())
+    var currentLong = SimpleDateFormat("yyyy-MM-dd HH")
+        .parse(sdf, ParsePosition(0)).time
+
+    return currentLong
 }
