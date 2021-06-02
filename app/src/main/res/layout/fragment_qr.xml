@@ -8,11 +8,11 @@
 
     <Button
         android:id="@+id/qrbutton"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="QR 스캔"
         app:layout_constraintBottom_toTopOf="@+id/nfcToggleButton"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/printButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView" />
 
@@ -46,13 +46,33 @@
 
     <ToggleButton
         android:id="@+id/nfcToggleButton"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:textOff="NFC 태그로 동작합니다"
         android:textOn="NFC 스캐너로 동작합니다"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/nfcWriteButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/qrbutton" />
+
+    <Button
+        android:id="@+id/printButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="QR 프린트"
+        app:layout_constraintBottom_toTopOf="@+id/nfcWriteButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/qrbutton"
+        app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+    <Button
+        android:id="@+id/nfcWriteButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="NFC 태그 쓰기"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/nfcToggleButton"
+        app:layout_constraintTop_toBottomOf="@+id/printButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

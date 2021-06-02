@@ -45,10 +45,9 @@ class AlertFragment : Fragment() {
                 Toast.makeText(activity, "날짜를 지정해주세요", Toast.LENGTH_LONG).show()
             }
             else{
-                val sdf = textDate2.text.toString()
-                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH")
-                val currentDay = dateFormat.parse(sdf, ParsePosition(0))
-                val currentLong = currentDay.time - 1210000000 // 2주 전
+                val currentLong = SimpleDateFormat("yyyy-MM-dd HH")
+                    .parse(textDate2.text.toString(), ParsePosition(0))
+                    .time - 1210000000 // 2주 전
 
                 val myUid = FirebaseUtils.firebaseAuth.currentUser.uid
                 val db = Firebase.firestore

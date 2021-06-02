@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         ////////////////////////////////////////////////////////////////////////////////////
         val myUid = FirebaseUtils.firebaseAuth.currentUser.uid
         val db = Firebase.firestore
-
+        Log.d("myuid", myUid)
         //delete old data
         db.collection("Users").document(myUid)
             .collection("Contacts")

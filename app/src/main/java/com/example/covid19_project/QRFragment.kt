@@ -2,10 +2,11 @@ package com.example.covid19_project
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +17,8 @@ import android.widget.ToggleButton
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
+import androidx.print.PrintHelper
+import androidx.print.PrintHelper.COLOR_MODE_MONOCHROME
 import com.google.firebase.dynamiclinks.DynamicLink
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 import com.google.firebase.firestore.ktx.firestore
@@ -23,8 +26,7 @@ import com.google.firebase.ktx.Firebase
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.integration.android.IntentIntegrator
 import com.journeyapps.barcodescanner.BarcodeEncoder
-import java.text.ParsePosition
-import java.text.SimpleDateFormat
+import org.jetbrains.anko.find
 import java.util.*
 
 class QRFragment : Fragment() {
@@ -35,8 +37,12 @@ class QRFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         val qrView = inflater.inflate(R.layout.fragment_qr, container, false)
-        val qrButton:Button = qrView.findViewById(R.id.qrbutton)
+
+        val qrButton : Button = qrView.findViewById(R.id.qrbutton)
         val nfcToggleButton : ToggleButton = qrView.findViewById(R.id.nfcToggleButton)
+        val printButton : Button = qrView.find(R.id.printButton)
+        val nfcWriteButton : Button = qrView.findViewById(R.id.nfcWriteButton)
+
         val imageViewQrCode: ImageView = qrView.findViewById(R.id.qrView)
         val fragment = CardReaderFragment()
         val bundle = Bundle()
@@ -60,18 +66,18 @@ class QRFragment : Fragment() {
                 .buildDynamicLink()
                 .uri.toString() + "meet/" +  myUid //  https://ajoucovid19.com/meet/접촉UID
         }
-        // 다이나믹 링크 생성 부분 끝
+        val myDynamicLink = createDynamicLink()
 
-        try {
-            val barcodeEncoder = BarcodeEncoder()
-            val bitmap = barcodeEncoder.encodeBitmap(createDynamicLink(),
+        // 다이나믹 링크 생성 부분 끝
+        val barcodeEncoder = BarcodeEncoder()
+        val bitmap = barcodeEncoder.encodeBitmap(myDynamicLink,
                 BarcodeFormat.QR_CODE,
                 400,
                 400)
             // UID를 QR코드로 만들면, QR 리더에서 이를 인식하면 해당 UID에 접속했다는 기록을 남기도록 구현해야지!
-            imageViewQrCode.setImageBitmap(bitmap)
-        } catch (e: Exception) {
-        }
+        imageViewQrCode.setImageBitmap(bitmap)
+
+        //QR촬영버튼 동작
         qrButton.setOnClickListener(){
             val integrator = IntentIntegrator.forSupportFragment(this);
             integrator.setOrientationLocked(false); //세로
@@ -97,7 +103,7 @@ class QRFragment : Fragment() {
                         // 현재 QR코드를 촬영한 유저의 클라우드 DB에 접촉 기록을 저장
                         val db = Firebase.firestore
                         // 위치정보 수집 동의 값 가져오기
-                        var log_scanning = hashMapOf(
+                        val log_scanning = hashMapOf(
                             "Who" to result,
                             "When" to getNowTime().let{Date(it)},
                             "Lat" to myLatitude,
@@ -142,6 +148,28 @@ class QRFragment : Fragment() {
             }
         }
 
+        //QR 출력
+        printButton.setOnClickListener() {
+            activity?.also { context ->
+                PrintHelper(context).apply {
+                    scaleMode = PrintHelper.SCALE_MODE_FIT
+                }.also { printHelper ->
+                    val bitmap = (imageViewQrCode.drawable as BitmapDrawable).bitmap
+
+                    printHelper.colorMode = COLOR_MODE_MONOCHROME
+                    printHelper.printBitmap("test print", bitmap)
+                }
+            }
+        }
+        //NFC 태그 기록
+
+        nfcWriteButton.setOnClickListener(){
+            val nfcWriteIntent = Intent(activity, NFCWriteActivity::class.java)
+            nfcWriteIntent.apply{
+                this.putExtra("myLink", myDynamicLink)
+            }
+            startActivity(nfcWriteIntent)
+        }
 
         return qrView
     }
