@@ -64,7 +64,7 @@
 
         android:text="범위"
         android:textColor="#000000"
-        app:layout_constraintBottom_toTopOf="@+id/textDate1"
+        app:layout_constraintBottom_toTopOf="@+id/checkAllow"
         app:layout_constraintEnd_toStartOf="@+id/radioTypes"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textTypes" />
@@ -73,10 +73,9 @@
         android:id="@+id/radioTypes"
         android:layout_width="0dp"
         android:layout_height="25dp"
-        android:layout_marginTop="32dp"
         android:layout_marginEnd="24dp"
         android:orientation="horizontal"
-        app:layout_constraintBottom_toTopOf="@+id/textDate2"
+        app:layout_constraintBottom_toTopOf="@+id/checkAllow"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/textRange"
         app:layout_constraintTop_toBottomOf="@+id/radioGroup">
@@ -98,32 +97,6 @@
             android:text="동일장소" />
     </RadioGroup>
 
-    <TextView
-        android:id="@+id/textDate1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginStart="32dp"
-        android:text="날짜"
-        android:textColor="#000000"
-        app:layout_constraintBottom_toTopOf="@+id/checkAllow"
-        app:layout_constraintEnd_toStartOf="@+id/textDate2"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textRange" />
-
-    <TextView
-        android:id="@+id/textDate2"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginEnd="32dp"
-        android:text="여기를 눌러 날짜를 지정해주세요"
-        android:textColor="#000000"
-        app:layout_constraintBottom_toTopOf="@+id/checkAllow"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/textDate1"
-        app:layout_constraintTop_toBottomOf="@+id/radioTypes" />
-
     <CheckBox
         android:id="@+id/checkAllow"
         android:layout_width="wrap_content"
@@ -132,7 +105,7 @@
         app:layout_constraintBottom_toTopOf="@+id/buttonSend"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textDate2" />
+        app:layout_constraintTop_toBottomOf="@+id/radioTypes" />
 
     <Button
         android:id="@+id/buttonSend"

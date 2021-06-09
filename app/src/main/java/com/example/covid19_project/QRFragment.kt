@@ -162,7 +162,6 @@ class QRFragment : Fragment() {
             }
         }
         //NFC 태그 기록
-
         nfcWriteButton.setOnClickListener(){
             val nfcWriteIntent = Intent(activity, NFCWriteActivity::class.java)
             nfcWriteIntent.apply{
