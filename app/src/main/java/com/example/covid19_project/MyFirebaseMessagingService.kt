@@ -27,7 +27,7 @@ class MyFirebaseMessagingService: FirebaseMessagingService() {
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT)
         val defaultSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val notificationBuilder = NotificationCompat.Builder(this)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.mipmap.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(body)
             .setSound(defaultSound)
