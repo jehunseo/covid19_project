@@ -5,6 +5,7 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.location.Location
+import android.location.LocationManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -26,6 +27,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
+import com.google.type.Date
 import kotlinx.android.synthetic.main.activity_maps.*
 
 private val db = FirebaseFirestore.getInstance()  //firestore db
@@ -54,8 +56,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     val PERM_FLAG = 99
 
     private lateinit var mMap: GoogleMap
-
     override fun onCreate(savedInstanceState: Bundle?){
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
 
@@ -145,7 +147,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         val lat = document.getDouble("Lat")!!
                         val lng = document.getDouble("Long")!!
                         val descriptor = getDescriptorFromDrawable(R.drawable.redcirlce) //접촉자 마커 모양 설정
-                        val marker = MarkerOptions().position(LatLng(lat,lng)).title(null).icon(descriptor) //marker 정의
+                        val marker = MarkerOptions().position(LatLng(lat,lng)).title("접촉자uid:".plus(name)).icon(descriptor)//marker 정의
                         markerList2.add(marker)
                         //mMap.addMarker(marker)
                         Log.d("마킹3", "위도: ${lat}, 경도: ${lng}, contact: ${name}")
